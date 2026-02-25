@@ -1,6 +1,7 @@
 """
-Neural Fights — World Map Launcher
-Run this from the neural_fights_complete/ directory.
+Neural Fights — 3D Globe World Map Launcher
+Opens the holographic Aethermoor globe in your browser.
+Requires: pip install flask flask-cors
 """
 import subprocess, sys, os
 script = os.path.join(os.path.dirname(__file__), "world_map_module", "run_worldmap.py")
