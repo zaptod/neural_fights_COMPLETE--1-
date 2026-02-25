@@ -15,6 +15,7 @@ from models import (
     validar_arma_personagem, sugerir_tamanho_arma, calcular_tamanho_arma
 )
 from data import carregar_armas, salvar_lista_armas, carregar_personagens
+from data.app_state import AppState
 from core import SKILL_DB
 from ui.theme import COR_BG, COR_BG_SECUNDARIO, COR_HEADER, COR_ACCENT, COR_SUCCESS, COR_TEXTO, COR_TEXTO_DIM, CORES_RARIDADE
 
@@ -49,28 +50,39 @@ class TelaArmas(tk.Frame):
         
         self.setup_ui()
 
+        # Subscribe: refresh when characters change (weapon validation needs them)
+        AppState.get().subscribe("characters_changed", self._on_chars_changed)
+
+    def _on_chars_changed(self, _data=None):
+        if hasattr(self, "atualizar_dados"):
+            self.atualizar_dados()
+
     def setup_ui(self):
         """Configura a interface principal"""
         # Header
         self.criar_header()
         
-        # Container principal dividido em 3 partes
+        # Container principal dividido em 3 partes — grid responsivo
         main = tk.Frame(self, bg=COR_BG)
         main.pack(fill="both", expand=True, padx=10, pady=5)
-        
+        main.grid_columnconfigure(0, weight=3, minsize=300)  # wizard
+        main.grid_columnconfigure(1, weight=4, minsize=200)  # centro/preview
+        main.grid_columnconfigure(2, weight=2, minsize=220)  # lista
+        main.grid_rowconfigure(0, weight=1)
+
         # Esquerda: Wizard Steps
-        self.frame_wizard = tk.Frame(main, bg=COR_BG_SECUNDARIO, width=400)
-        self.frame_wizard.pack(side="left", fill="y", padx=(0, 10))
-        self.frame_wizard.pack_propagate(False)
-        
+        self.frame_wizard = tk.Frame(main, bg=COR_BG_SECUNDARIO)
+        self.frame_wizard.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        self.frame_wizard.grid_rowconfigure(1, weight=1)
+        self.frame_wizard.grid_columnconfigure(0, weight=1)
+
         # Centro: Preview e controles
         self.frame_centro = tk.Frame(main, bg=COR_BG)
-        self.frame_centro.pack(side="left", fill="both", expand=True, padx=(0, 10))
-        
+        self.frame_centro.grid(row=0, column=1, sticky="nsew", padx=5)
+
         # Direita: Lista de armas
-        self.frame_lista = tk.Frame(main, bg=COR_BG_SECUNDARIO, width=300)
-        self.frame_lista.pack(side="right", fill="y")
-        self.frame_lista.pack_propagate(False)
+        self.frame_lista = tk.Frame(main, bg=COR_BG_SECUNDARIO)
+        self.frame_lista.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
         
         # Configura cada seção
         self.setup_wizard()
@@ -132,36 +144,74 @@ class TelaArmas(tk.Frame):
             self.frame_wizard, text="", 
             font=("Helvetica", 14, "bold"), bg=COR_BG_SECUNDARIO, fg=COR_TEXTO
         )
-        self.lbl_passo_titulo.pack(pady=(15, 5))
+        self.lbl_passo_titulo.grid(row=0, column=0, pady=(15, 5), sticky="ew")
         
         self.lbl_passo_desc = tk.Label(
             self.frame_wizard, text="", 
             font=("Arial", 10), bg=COR_BG_SECUNDARIO, fg=COR_TEXTO_DIM,
-            wraplength=380
+            wraplength=300
         )
-        self.lbl_passo_desc.pack(pady=(0, 15))
-        
-        # Container para conteúdo do passo
-        self.frame_conteudo_passo = tk.Frame(self.frame_wizard, bg=COR_BG_SECUNDARIO)
-        self.frame_conteudo_passo.pack(fill="both", expand=True, padx=15)
-        
-        # Botões de navegação
+        self.lbl_passo_desc.grid(row=0, column=0, pady=(40, 0), sticky="ew")
+        # wraplength will be updated dynamically on resize
+        self.frame_wizard.bind("<Configure>", self._on_wizard_resize)
+
+        # Container scrollável para conteúdo do passo (evita overflow em telas pequenas)
+        scroll_container = tk.Frame(self.frame_wizard, bg=COR_BG_SECUNDARIO)
+        scroll_container.grid(row=1, column=0, sticky="nsew", padx=5)
+        scroll_container.grid_rowconfigure(0, weight=1)
+        scroll_container.grid_columnconfigure(0, weight=1)
+
+        self._canvas_wizard = tk.Canvas(scroll_container, bg=COR_BG_SECUNDARIO, highlightthickness=0)
+        _scrollbar_wizard = ttk.Scrollbar(scroll_container, orient="vertical", command=self._canvas_wizard.yview)
+        self._canvas_wizard.configure(yscrollcommand=_scrollbar_wizard.set)
+
+        self._canvas_wizard.grid(row=0, column=0, sticky="nsew")
+        _scrollbar_wizard.grid(row=0, column=1, sticky="ns")
+        scroll_container.grid_columnconfigure(0, weight=1)
+
+        self.frame_conteudo_passo = tk.Frame(self._canvas_wizard, bg=COR_BG_SECUNDARIO)
+        self._window_id = self._canvas_wizard.create_window((0, 0), window=self.frame_conteudo_passo, anchor="nw")
+
+        def _update_scroll(event=None):
+            self._canvas_wizard.configure(scrollregion=self._canvas_wizard.bbox("all"))
+            # keep inner frame width in sync with canvas width
+            canvas_w = self._canvas_wizard.winfo_width()
+            if canvas_w > 1:
+                self._canvas_wizard.itemconfig(self._window_id, width=canvas_w)
+
+        self.frame_conteudo_passo.bind("<Configure>", _update_scroll)
+        self._canvas_wizard.bind("<Configure>", _update_scroll)
+
+        # Mousewheel scroll
+        def _on_mousewheel(event):
+            self._canvas_wizard.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        self._canvas_wizard.bind_all("<MouseWheel>", _on_mousewheel)
+
+        # Botões de navegação — fixos na base, sempre visíveis
         frame_nav = tk.Frame(self.frame_wizard, bg=COR_BG_SECUNDARIO)
-        frame_nav.pack(side="bottom", fill="x", pady=15, padx=15)
+        frame_nav.grid(row=2, column=0, sticky="ew", pady=10, padx=10)
+        frame_nav.grid_columnconfigure(0, weight=1)
+        frame_nav.grid_columnconfigure(1, weight=1)
         
         self.btn_anterior = tk.Button(
             frame_nav, text="< Anterior", bg=COR_BG, fg=COR_TEXTO,
             font=("Arial", 10), bd=0, padx=20, pady=8,
             command=self.passo_anterior
         )
-        self.btn_anterior.pack(side="left")
+        self.btn_anterior.grid(row=0, column=0, sticky="w")
         
         self.btn_proximo = tk.Button(
             frame_nav, text="Proximo >", bg=COR_ACCENT, fg=COR_TEXTO,
             font=("Arial", 10, "bold"), bd=0, padx=20, pady=8,
             command=self.passo_proximo
         )
-        self.btn_proximo.pack(side="right")
+        self.btn_proximo.grid(row=0, column=1, sticky="e")
+
+    def _on_wizard_resize(self, event=None):
+        """Adjust wraplength of description label to match wizard width."""
+        w = self.frame_wizard.winfo_width()
+        if w > 40:
+            self.lbl_passo_desc.config(wraplength=max(w - 40, 100))
 
     def setup_preview(self):
         """Configura o preview da arma"""
@@ -171,11 +221,10 @@ class TelaArmas(tk.Frame):
             font=("Arial", 12, "bold"), bg=COR_BG, fg=COR_TEXTO
         ).pack(pady=(10, 5))
         
-        # Canvas do preview
+        # Canvas do preview — expande com a janela
         self.canvas_preview = tk.Canvas(
             self.frame_centro, bg=COR_BG_SECUNDARIO, 
-            highlightthickness=2, highlightbackground=COR_ACCENT,
-            height=300
+            highlightthickness=2, highlightbackground=COR_ACCENT
         )
         self.canvas_preview.pack(fill="both", expand=True, padx=10, pady=5)
         
@@ -383,7 +432,7 @@ class TelaArmas(tk.Frame):
             tk.Label(
                 frame, text=dados["descricao"],
                 font=("Arial", 8), bg=COR_BG, fg=COR_TEXTO_DIM,
-                wraplength=170
+                wraplength=160, justify="left"
             ).pack(anchor="w", padx=10, pady=(0, 5))
         
         frame_tipos.columnconfigure(0, weight=1)
@@ -491,7 +540,7 @@ class TelaArmas(tk.Frame):
         tk.Label(frame_stats, text="Dano Base:", bg=COR_BG_SECUNDARIO, fg=COR_TEXTO).grid(row=0, column=0, sticky="w", pady=2)
         self.scale_dano = tk.Scale(
             frame_stats, from_=1, to=50, orient="horizontal",
-            bg=COR_BG_SECUNDARIO, fg=COR_TEXTO, length=250,
+            bg=COR_BG_SECUNDARIO, fg=COR_TEXTO,
             command=lambda v: self.atualizar_dado("dano", float(v))
         )
         self.scale_dano.set(self.dados_arma["dano"])
@@ -500,7 +549,7 @@ class TelaArmas(tk.Frame):
         tk.Label(frame_stats, text="Peso (kg):", bg=COR_BG_SECUNDARIO, fg=COR_TEXTO).grid(row=1, column=0, sticky="w", pady=2)
         self.scale_peso = tk.Scale(
             frame_stats, from_=0.5, to=30, orient="horizontal", resolution=0.5,
-            bg=COR_BG_SECUNDARIO, fg=COR_TEXTO, length=250,
+            bg=COR_BG_SECUNDARIO, fg=COR_TEXTO,
             command=lambda v: self.atualizar_dado("peso", float(v))
         )
         self.scale_peso.set(self.dados_arma["peso"])
@@ -574,7 +623,7 @@ class TelaArmas(tk.Frame):
             
             scale = tk.Scale(
                 frame_geo, from_=minv, to=maxv, orient="horizontal",
-                bg=COR_BG_SECUNDARIO, fg=COR_TEXTO, length=250,
+                bg=COR_BG_SECUNDARIO, fg=COR_TEXTO,
                 command=lambda v, k=key: self.atualizar_geometria(k, float(v))
             )
             scale.set(val)
@@ -638,7 +687,7 @@ class TelaArmas(tk.Frame):
             
             scale = tk.Scale(
                 frame_cores, from_=0, to=255, orient="horizontal",
-                bg=COR_BG_SECUNDARIO, fg=COR_TEXTO, length=280,
+                bg=COR_BG_SECUNDARIO, fg=COR_TEXTO,
                 command=lambda v, c=comp: self.atualizar_cor(c, int(v))
             )
             scale.set(cores[comp])
@@ -1285,13 +1334,12 @@ class TelaArmas(tk.Frame):
                 afinidade_elemento=dados["afinidade_elemento"],
             )
             
+            _state = AppState.get()
             if self.indice_em_edicao is not None:
-                self.controller.lista_armas[self.indice_em_edicao] = nova
+                _state.update_weapon(self.indice_em_edicao, nova)
                 self.indice_em_edicao = None
             else:
-                self.controller.lista_armas.append(nova)
-            
-            salvar_lista_armas(self.controller.lista_armas)
+                _state.add_weapon(nova)
             self.atualizar_lista()
             self.nova_arma()
             
@@ -1397,8 +1445,7 @@ class TelaArmas(tk.Frame):
         arma = self.controller.lista_armas[idx]
         
         if messagebox.askyesno("Confirmar", f"Deletar '{arma.nome}'?"):
-            del self.controller.lista_armas[idx]
-            salvar_lista_armas(self.controller.lista_armas)
+            AppState.get().delete_weapon(idx)
             self.atualizar_lista()
 
     def nova_arma(self):

@@ -6,368 +6,119 @@
 <title>NEURAL FIGHTS — AETHERMOOR</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
-
-  :root {
-    --cyan:    #00d9ff;
-    --crimson: #e94560;
-    --gold:    #ffd700;
-    --void:    #0a0a1a;
-    --panel:   rgba(10, 15, 40, 0.85);
-    --border:  rgba(0, 217, 255, 0.25);
-    --glow:    0 0 20px rgba(0, 217, 255, 0.4);
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: #000008;
-    overflow: hidden;
-    font-family: 'Share Tech Mono', monospace;
-    color: #fff;
-    cursor: crosshair;
-  }
-
-  #c {
-    display: block;
-    width: 100vw;
-    height: 100vh;
-  }
-
-  /* ── TOP HEADER ──────────────────────────────────────────────────── */
-  #hud-top {
-    position: fixed; top: 0; left: 0; right: 0;
-    height: 52px;
-    background: linear-gradient(180deg, rgba(0,8,30,0.95) 0%, transparent 100%);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 24px;
-    border-bottom: 1px solid var(--border);
-    z-index: 100;
-    pointer-events: none;
-  }
-
-  #hud-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 18px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    color: var(--cyan);
-    text-shadow: var(--glow);
-  }
-
-  #hud-title span { color: var(--crimson); }
-
-  #hud-stats {
-    display: flex; gap: 32px; align-items: center;
-  }
-
-  .stat-pill {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 11px; letter-spacing: 1px;
-    color: rgba(255,255,255,0.6);
-  }
-
-  .stat-pill strong { color: var(--cyan); font-size: 14px; }
-
-  #hud-time {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 11px;
-    color: rgba(0,217,255,0.5);
-    letter-spacing: 2px;
-  }
-
-  /* ── GOD LIST PANEL (LEFT) ───────────────────────────────────────── */
-  #panel-gods {
-    position: fixed; top: 64px; left: 16px;
-    width: 240px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    z-index: 100;
-    overflow: hidden;
-    backdrop-filter: blur(8px);
-    transition: opacity 0.3s;
-  }
-
-  #panel-gods-header {
-    background: rgba(0,217,255,0.08);
-    padding: 8px 14px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
-    letter-spacing: 3px;
-    color: var(--cyan);
-    border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-
-  .god-row {
-    padding: 8px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    cursor: pointer;
-    transition: background 0.2s;
-    display: flex; align-items: center; gap: 10px;
-  }
-
-  .god-row:hover { background: rgba(0,217,255,0.06); }
-  .god-row.selected { background: rgba(0,217,255,0.12); }
-
-  .god-color-bar {
-    width: 3px; height: 32px;
-    border-radius: 2px; flex-shrink: 0;
-  }
-
-  .god-info { flex: 1; min-width: 0; }
-
-  .god-name {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 11px; font-weight: 700;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-
-  .god-meta {
-    font-size: 9px; color: rgba(255,255,255,0.45);
-    margin-top: 2px; letter-spacing: 0.5px;
-  }
-
-  .god-zones-badge {
-    font-size: 9px; padding: 2px 6px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 10px; white-space: nowrap;
-    color: rgba(255,255,255,0.5);
-  }
-
-  /* ── ZONE TOOLTIP (hover) ────────────────────────────────────────── */
-  #zone-tooltip {
-    position: fixed;
-    pointer-events: none;
-    z-index: 200;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 10px 14px;
-    min-width: 200px; max-width: 280px;
-    backdrop-filter: blur(12px);
-    opacity: 0;
-    transition: opacity 0.15s;
-    transform: translate(16px, -50%);
-  }
-
-  #zone-tooltip.visible { opacity: 1; }
-
-  #zt-name {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 12px; font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  #zt-region { font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 1px; margin-bottom: 8px; }
-  #zt-god { font-size: 10px; margin-bottom: 4px; }
-  #zt-lore { font-size: 9px; color: rgba(255,255,255,0.5); line-height: 1.5; font-style: italic; }
-  #zt-seal { font-size: 10px; margin-top: 6px; color: var(--gold); }
-
-  /* ── SELECTED ZONE PANEL (RIGHT) ────────────────────────────────── */
-  #panel-selected {
-    position: fixed; top: 64px; right: 16px;
-    width: 260px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    z-index: 100;
-    backdrop-filter: blur(8px);
-    overflow: hidden;
-    opacity: 0;
-    transform: translateX(20px);
-    transition: opacity 0.3s, transform 0.3s;
-    pointer-events: none;
-  }
-
-  #panel-selected.visible {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-  }
-
-  #ps-header {
-    background: rgba(233,69,96,0.1);
-    padding: 10px 14px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px; letter-spacing: 3px;
-    color: var(--crimson);
-    border-bottom: 1px solid rgba(233,69,96,0.2);
-  }
-
-  #ps-body { padding: 14px; }
-  #ps-zone-name { font-family: 'Orbitron', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-  #ps-region { font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 1px; margin-bottom: 12px; }
-  #ps-lore { font-size: 10px; color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 12px; border-left: 2px solid var(--border); padding-left: 8px; font-style: italic; }
-
-  .ps-stat { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .ps-stat-label { font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 1px; }
-  .ps-stat-value { font-size: 11px; font-family: 'Orbitron', sans-serif; }
-
-  #ps-close {
-    position: absolute; top: 10px; right: 12px;
-    cursor: pointer; color: rgba(255,255,255,0.4);
-    font-size: 14px; line-height: 1;
-    transition: color 0.2s;
-    pointer-events: auto;
-  }
-
-  #ps-close:hover { color: var(--crimson); }
-
-  /* ── BOTTOM CONTESTED BAR ────────────────────────────────────────── */
-  #hud-bottom {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    height: 40px;
-    background: linear-gradient(0deg, rgba(0,8,30,0.95) 0%, transparent 100%);
-    display: flex; align-items: center; justify-content: center; gap: 24px;
-    border-top: 1px solid var(--border);
-    z-index: 100;
-    pointer-events: none;
-  }
-
-  .contested-pill {
-    font-size: 9px; letter-spacing: 1px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,200,0,0.4);
-    color: var(--gold);
-    animation: pillPulse 2s infinite;
-  }
-
-  @keyframes pillPulse {
-    0%,100% { opacity: 0.6; }
-    50% { opacity: 1; box-shadow: 0 0 8px rgba(255,200,0,0.5); }
-  }
-
-  /* ── NOTIFICATION ────────────────────────────────────────────────── */
-  #notification {
-    position: fixed; bottom: 56px; left: 50%;
-    transform: translateX(-50%);
-    z-index: 300;
-    pointer-events: none;
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-  }
-
-  .notif {
-    background: rgba(0,8,30,0.92);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 8px 20px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 11px; letter-spacing: 2px;
-    backdrop-filter: blur(12px);
-    animation: notifIn 0.3s ease-out, notifOut 0.4s ease-in 3.6s forwards;
-    white-space: nowrap;
-  }
-
-  @keyframes notifIn  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  @keyframes notifOut { to   { opacity: 0; transform: translateY(-6px); } }
-
-  /* ── CONTROLS HINT ───────────────────────────────────────────────── */
-  #controls-hint {
-    position: fixed; bottom: 50px; right: 16px;
-    font-size: 9px; color: rgba(255,255,255,0.2);
-    line-height: 1.8; letter-spacing: 1px;
-    z-index: 100; pointer-events: none; text-align: right;
-  }
-
-  /* ── SCAN LINE EFFECT ────────────────────────────────────────────── */
-  #scanline {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,217,255,0.01) 2px,
-      rgba(0,217,255,0.01) 4px
-    );
-    pointer-events: none; z-index: 50;
-  }
-
-  /* ── CORNER BRACKETS ─────────────────────────────────────────────── */
-  .corner {
-    position: fixed; width: 30px; height: 30px;
-    z-index: 100; pointer-events: none;
-    opacity: 0.4;
-  }
-  .corner::before, .corner::after { content: ''; position: absolute; background: var(--cyan); }
-  .corner::before { width: 100%; height: 2px; }
-  .corner::after  { width: 2px; height: 100%; }
-  .corner.tl { top: 8px; left: 8px; }
-  .corner.tr { top: 8px; right: 8px; transform: scaleX(-1); }
-  .corner.bl { bottom: 8px; left: 8px; transform: scaleY(-1); }
-  .corner.br { bottom: 8px; right: 8px; transform: scale(-1); }
-
-  /* ── ANCIENT SEAL PULSE ──────────────────────────────────────────── */
-  @keyframes sealPulse {
-    0%,100% { opacity: 0.5; }
-    50% { opacity: 1; }
-  }
-
-  /* ── LOADING SCREEN ──────────────────────────────────────────────── */
-  #loader {
-    position: fixed; inset: 0;
-    background: #000008;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 999;
-    transition: opacity 0.8s;
-  }
-
-  #loader.hidden { opacity: 0; pointer-events: none; }
-
-  #loader-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 28px; font-weight: 900;
-    letter-spacing: 8px;
-    color: var(--cyan);
-    text-shadow: 0 0 40px rgba(0,217,255,0.8);
-    margin-bottom: 8px;
-  }
-
-  #loader-sub {
-    font-size: 11px; letter-spacing: 4px;
-    color: rgba(255,255,255,0.3); margin-bottom: 40px;
-  }
-
-  #loader-bar-wrap {
-    width: 280px; height: 2px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 2px; overflow: hidden;
-  }
-
-  #loader-bar {
-    height: 100%; width: 0%;
-    background: var(--cyan);
-    box-shadow: 0 0 8px var(--cyan);
-    transition: width 0.1s;
-  }
-
-  #loader-status {
-    margin-top: 12px; font-size: 10px;
-    letter-spacing: 2px; color: rgba(0,217,255,0.5);
-  }
+  :root{--cyan:#00d9ff;--crimson:#e94560;--gold:#ffd700;--panel:rgba(10,15,40,0.88);--border:rgba(0,217,255,0.22);--glow:0 0 20px rgba(0,217,255,0.4);--r:5px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#000008;overflow:hidden;font-family:'Share Tech Mono',monospace;color:#fff;cursor:crosshair;}
+  #c{display:block;width:100vw;height:100vh;}
+  #hud-top{position:fixed;top:0;left:0;right:0;height:52px;background:linear-gradient(180deg,rgba(0,8,30,.97) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);z-index:100;pointer-events:none;}
+  #hud-title{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;letter-spacing:4px;color:var(--cyan);text-shadow:var(--glow);}
+  #hud-title span{color:var(--crimson);}
+  #hud-stats{display:flex;gap:28px;align-items:center;}
+  .stat-pill{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.55);}
+  .stat-pill strong{color:var(--cyan);font-size:13px;}
+  #hud-time{font-family:'Orbitron',sans-serif;font-size:10px;color:rgba(0,217,255,.45);letter-spacing:2px;}
+  #panel-gods{position:fixed;top:64px;left:16px;width:248px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);z-index:100;overflow:hidden;backdrop-filter:blur(10px);max-height:calc(100vh - 120px);display:flex;flex-direction:column;}
+  #panel-gods-header{background:rgba(0,217,255,.07);padding:9px 14px;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--cyan);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  #panel-gods-header button{background:rgba(0,217,255,.12);border:1px solid rgba(0,217,255,.3);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:3px;cursor:pointer;transition:background .2s;}
+  #panel-gods-header button:hover{background:rgba(0,217,255,.25);}
+  #god-list{overflow-y:auto;flex:1;}
+  #god-list::-webkit-scrollbar{width:3px;}
+  #god-list::-webkit-scrollbar-thumb{background:rgba(0,217,255,.2);border-radius:2px;}
+  .god-row{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:10px;}
+  .god-row:hover{background:rgba(0,217,255,.06);}
+  .god-color-bar{width:3px;height:32px;border-radius:2px;flex-shrink:0;}
+  .god-info{flex:1;min-width:0;}
+  .god-name{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .god-meta{font-size:9px;color:rgba(255,255,255,.4);margin-top:2px;}
+  .god-zones-badge{font-size:9px;padding:2px 6px;background:rgba(255,255,255,.06);border-radius:10px;white-space:nowrap;color:rgba(255,255,255,.45);}
+  .hero-badge{font-size:8px;padding:1px 5px;background:rgba(0,217,255,.15);border:1px solid rgba(0,217,255,.3);border-radius:10px;color:var(--cyan);letter-spacing:1px;margin-left:4px;}
+  #zone-tooltip{position:fixed;pointer-events:none;z-index:200;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:11px 15px;min-width:210px;max-width:290px;backdrop-filter:blur(12px);opacity:0;transition:opacity .15s;transform:translate(16px,-50%);}
+  #zone-tooltip.visible{opacity:1;}
+  #zt-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;margin-bottom:3px;}
+  #zt-region{font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;margin-bottom:9px;}
+  #zt-god{font-size:10px;margin-bottom:4px;}
+  #zt-nature{font-size:9px;color:rgba(255,255,255,.4);margin-bottom:4px;}
+  #zt-lore{font-size:9px;color:rgba(255,255,255,.5);line-height:1.5;font-style:italic;}
+  #zt-seal{font-size:10px;margin-top:6px;color:var(--gold);}
+  #zt-neighbors{font-size:8px;color:rgba(255,255,255,.28);margin-top:5px;}
+  #panel-selected{position:fixed;top:64px;right:16px;width:268px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);z-index:100;backdrop-filter:blur(10px);overflow:hidden;opacity:0;transform:translateX(20px);transition:opacity .3s,transform .3s;pointer-events:none;}
+  #panel-selected.visible{opacity:1;transform:translateX(0);pointer-events:auto;}
+  #ps-header{background:rgba(233,69,96,.1);padding:10px 14px;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--crimson);border-bottom:1px solid rgba(233,69,96,.18);}
+  #ps-body{padding:14px;}
+  #ps-zone-name{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;margin-bottom:2px;}
+  #ps-region{font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;margin-bottom:11px;}
+  #ps-lore{font-size:10px;color:rgba(255,255,255,.55);line-height:1.6;margin-bottom:12px;border-left:2px solid var(--border);padding-left:8px;font-style:italic;}
+  .ps-stat{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .ps-stat-label{font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;}
+  .ps-stat-value{font-size:11px;font-family:'Orbitron',sans-serif;}
+  #ps-actions{display:flex;gap:8px;margin-top:14px;}
+  .ps-btn{flex:1;padding:7px 10px;border-radius:3px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;border:1px solid;transition:all .2s;text-align:center;}
+  #btn-fly{background:rgba(0,217,255,.08);border-color:rgba(0,217,255,.3);color:var(--cyan);}
+  #btn-fly:hover{background:rgba(0,217,255,.2);}
+  #btn-release{background:rgba(233,69,96,.08);border-color:rgba(233,69,96,.3);color:var(--crimson);}
+  #btn-release:hover{background:rgba(233,69,96,.2);}
+  #ps-close{position:absolute;top:10px;right:12px;cursor:pointer;color:rgba(255,255,255,.35);font-size:14px;transition:color .2s;pointer-events:auto;}
+  #ps-close:hover{color:var(--crimson);}
+  #panel-create{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);width:420px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);z-index:300;backdrop-filter:blur(16px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;}
+  #panel-create.visible{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto;}
+  #pc-header{background:rgba(233,69,96,.1);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(233,69,96,.18);}
+  #pc-header span{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;color:var(--crimson);}
+  #pc-close{cursor:pointer;color:rgba(255,255,255,.4);font-size:16px;transition:color .2s;}
+  #pc-close:hover{color:var(--crimson);}
+  #pc-body{padding:18px 18px 14px;}
+  .pc-row{margin-bottom:12px;}
+  .pc-label{font-size:9px;color:rgba(255,255,255,.45);letter-spacing:2px;margin-bottom:5px;}
+  .pc-input{width:100%;background:rgba(0,217,255,.04);border:1px solid rgba(0,217,255,.18);border-radius:3px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 10px;outline:none;transition:border-color .2s;}
+  .pc-input:focus{border-color:rgba(0,217,255,.5);}
+  select.pc-input option{background:#0a0a1a;}
+  .pc-row-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .pc-color-row{display:flex;gap:10px;align-items:flex-start;}
+  .pc-color-row .pc-row{flex:1;margin-bottom:0;}
+  #pc-color-preview{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.2);flex-shrink:0;margin-top:22px;transition:background .3s;}
+  #btn-summon{width:100%;padding:11px;margin-top:8px;background:rgba(233,69,96,.15);border:1px solid rgba(233,69,96,.4);color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;cursor:pointer;border-radius:3px;transition:all .2s;}
+  #btn-summon:hover{background:rgba(233,69,96,.3);box-shadow:0 0 20px rgba(233,69,96,.3);}
+  #pc-status{text-align:center;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.35);margin-top:8px;min-height:14px;}
+  #panel-seals{position:fixed;bottom:52px;right:16px;width:222px;background:var(--panel);border:1px solid rgba(184,134,11,.25);border-radius:var(--r);z-index:100;overflow:hidden;backdrop-filter:blur(10px);}
+  #ps-seals-header{background:rgba(184,134,11,.07);padding:8px 14px;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--gold);border-bottom:1px solid rgba(184,134,11,.2);}
+  .seal-row{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:8px;}
+  .seal-name{font-size:10px;flex:1;}
+  .seal-status{font-size:8px;letter-spacing:1px;padding:2px 6px;border-radius:10px;}
+  .seal-sleeping{background:rgba(60,0,80,.4);border:1px solid rgba(120,0,160,.3);color:rgba(180,100,255,.7);}
+  .seal-stirring{background:rgba(100,60,0,.4);border:1px solid rgba(200,120,0,.3);color:rgba(255,180,50,.8);}
+  .seal-awakened{background:rgba(0,60,100,.4);border:1px solid rgba(0,150,255,.3);color:var(--cyan);}
+  .seal-broken{background:rgba(100,0,0,.5);border:1px solid rgba(255,0,0,.4);color:#ff4444;}
+  .seal-cracks{display:flex;gap:2px;}
+  .crack-pip{width:6px;height:6px;border-radius:1px;}
+  .crack-pip.filled{background:var(--gold);}
+  .crack-pip.empty{background:rgba(255,255,255,.1);}
+  #hud-bottom{position:fixed;bottom:0;left:0;right:0;height:42px;background:linear-gradient(0deg,rgba(0,8,30,.97) 0%,transparent 100%);display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid var(--border);z-index:100;pointer-events:none;}
+  .contested-pill{font-size:9px;letter-spacing:1px;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,200,0,.4);color:var(--gold);animation:pillPulse 2s infinite;}
+  @keyframes pillPulse{0%,100%{opacity:.6;}50%{opacity:1;box-shadow:0 0 8px rgba(255,200,0,.4);}}
+  #notification{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:300;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .notif{background:rgba(0,8,30,.94);border:1px solid var(--border);border-radius:4px;padding:8px 20px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;backdrop-filter:blur(12px);animation:notifIn .3s ease-out,notifOut .4s ease-in 3.6s forwards;white-space:nowrap;}
+  @keyframes notifIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes notifOut{to{opacity:0;transform:translateY(-6px)}}
+  #controls-hint{position:fixed;bottom:52px;right:252px;font-size:9px;color:rgba(255,255,255,.17);line-height:1.9;letter-spacing:1px;z-index:100;pointer-events:none;text-align:right;}
+  #scanline{position:fixed;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,217,255,.007) 2px,rgba(0,217,255,.007) 4px);pointer-events:none;z-index:50;}
+  .corner{position:fixed;width:28px;height:28px;z-index:100;pointer-events:none;opacity:.35;}
+  .corner::before,.corner::after{content:'';position:absolute;background:var(--cyan);}
+  .corner::before{width:100%;height:2px;}.corner::after{width:2px;height:100%;}
+  .corner.tl{top:8px;left:8px;}.corner.tr{top:8px;right:8px;transform:scaleX(-1);}
+  .corner.bl{bottom:8px;left:8px;transform:scaleY(-1);}.corner.br{bottom:8px;right:8px;transform:scale(-1);}
+  #loader{position:fixed;inset:0;background:#000008;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .8s;}
+  #loader.hidden{opacity:0;pointer-events:none;}
+  #loader-title{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;letter-spacing:8px;color:var(--cyan);text-shadow:0 0 40px rgba(0,217,255,.8);margin-bottom:6px;}
+  #loader-sub{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,.28);margin-bottom:36px;}
+  #loader-bar-wrap{width:280px;height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+  #loader-bar{height:100%;width:0%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transition:width .15s;}
+  #loader-status{margin-top:12px;font-size:9px;letter-spacing:2px;color:rgba(0,217,255,.45);}
 </style>
 </head>
 <body>
-
-<!-- Loading Screen -->
-<div id="loader">
-  <div id="loader-title">NEURAL FIGHTS</div>
-  <div id="loader-sub">AETHERMOOR ATLAS v3.0</div>
-  <div id="loader-bar-wrap"><div id="loader-bar"></div></div>
-  <div id="loader-status">INITIALIZING GLOBE ENGINE...</div>
-</div>
-
-<!-- Corner brackets -->
-<div class="corner tl"></div><div class="corner tr"></div>
-<div class="corner bl"></div><div class="corner br"></div>
+<div id="loader"><div id="loader-title">NEURAL FIGHTS</div><div id="loader-sub">AETHERMOOR ATLAS v4.0</div><div id="loader-bar-wrap"><div id="loader-bar"></div></div><div id="loader-status">INITIALIZING GLOBE ENGINE...</div></div>
+<div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
 <div id="scanline"></div>
-
-<!-- WebGL Canvas -->
 <canvas id="c"></canvas>
-
-<!-- Top HUD -->
 <div id="hud-top">
   <div id="hud-title">NEURAL <span>FIGHTS</span> — AETHERMOOR</div>
   <div id="hud-stats">
@@ -375,1224 +126,251 @@
     <div class="stat-pill">ZONES <strong id="stat-zones">0/24</strong></div>
     <div class="stat-pill">CONTESTED <strong id="stat-contested">0</strong></div>
     <div class="stat-pill">FOLLOWERS <strong id="stat-followers">0</strong></div>
+    <div class="stat-pill">WAR <strong id="stat-war">0%</strong></div>
   </div>
-  <div id="hud-time" id="hud-time">— LIVE —</div>
+  <div id="hud-time">— LIVE —</div>
 </div>
-
-<!-- Left: God List -->
 <div id="panel-gods">
   <div id="panel-gods-header">
     <span>⚔ ACTIVE GODS</span>
-    <span id="god-count">0</span>
+    <div style="display:flex;gap:6px;align-items:center"><span id="god-count" style="opacity:.5;font-size:10px">0</span><button onclick="toggleCreatePanel()">+ SUMMON</button></div>
   </div>
   <div id="god-list"></div>
 </div>
-
-<!-- Right: Selected Zone -->
 <div id="panel-selected">
-  <div id="ps-header">ZONE INTEL</div>
-  <div id="ps-close">✕</div>
+  <div id="ps-header">ZONE INTEL</div><div id="ps-close">✕</div>
   <div id="ps-body">
-    <div id="ps-zone-name">—</div>
-    <div id="ps-region">—</div>
-    <div id="ps-lore">—</div>
+    <div id="ps-zone-name">—</div><div id="ps-region">—</div><div id="ps-lore">—</div>
     <div class="ps-stat"><span class="ps-stat-label">CONTROLLED BY</span><span class="ps-stat-value" id="ps-god">—</span></div>
     <div class="ps-stat"><span class="ps-stat-label">NATURE</span><span class="ps-stat-value" id="ps-nature">—</span></div>
     <div class="ps-stat"><span class="ps-stat-label">FOLLOWERS</span><span class="ps-stat-value" id="ps-followers">—</span></div>
     <div class="ps-stat"><span class="ps-stat-label">TERRITORY</span><span class="ps-stat-value" id="ps-territory">—</span></div>
+    <div class="ps-stat"><span class="ps-stat-label">NEIGHBORS</span><span class="ps-stat-value" id="ps-neighbors" style="font-size:9px;text-align:right;max-width:155px;word-break:break-word">—</span></div>
+    <div id="ps-actions"><div class="ps-btn" id="btn-fly" onclick="flyToSelectedZone()">✈ FLY TO</div><div class="ps-btn" id="btn-release" onclick="releaseSelectedZone()">🔓 RELEASE</div></div>
   </div>
 </div>
-
-<!-- Zone Hover Tooltip -->
-<div id="zone-tooltip">
-  <div id="zt-name">—</div>
-  <div id="zt-region">—</div>
-  <div id="zt-god">—</div>
-  <div id="zt-lore">—</div>
-  <div id="zt-seal"></div>
+<div id="zone-tooltip"><div id="zt-name">—</div><div id="zt-region">—</div><div id="zt-god">—</div><div id="zt-nature">—</div><div id="zt-lore">—</div><div id="zt-seal"></div><div id="zt-neighbors"></div></div>
+<div id="panel-create">
+  <div id="pc-header"><span>⚡ SUMMON A GOD</span><span id="pc-close" onclick="toggleCreatePanel()">✕</span></div>
+  <div id="pc-body">
+    <div class="pc-row"><div class="pc-label">GOD NAME</div><input class="pc-input" id="pc-name" placeholder="Enter god name..." maxlength="40"></div>
+    <div class="pc-row-grid">
+      <div class="pc-row"><div class="pc-label">NATURE ELEMENT</div>
+        <select class="pc-input" id="pc-nature" onchange="onNatureChange()">
+          <option value="balanced">Balanced</option><option value="fire">Fire</option><option value="ice">Ice</option>
+          <option value="darkness">Darkness</option><option value="nature">Nature</option><option value="chaos">Chaos</option>
+          <option value="void">Void</option><option value="greed">Greed</option><option value="fear">Fear</option>
+          <option value="arcane">Arcane</option><option value="blood">Blood</option><option value="time">Time</option><option value="gravity">Gravity</option>
+        </select>
+      </div>
+      <div class="pc-row"><div class="pc-label">FOLLOWERS</div><input class="pc-input" id="pc-followers" type="number" min="0" value="0"></div>
+    </div>
+    <div class="pc-color-row">
+      <div class="pc-row"><div class="pc-label">PRIMARY COLOR</div><input class="pc-input" id="pc-color" type="color" value="#00d9ff" style="height:36px;padding:3px 6px;cursor:pointer"></div>
+      <div id="pc-color-preview" style="background:#00d9ff"></div>
+    </div>
+    <div class="pc-row"><div class="pc-label">LORE (optional)</div><input class="pc-input" id="pc-lore" placeholder="The god's origin story..."></div>
+    <button id="btn-summon" onclick="summonGod()">⚡ SUMMON GOD</button>
+    <div id="pc-status"></div>
+  </div>
 </div>
-
-<!-- Bottom: Contested alerts -->
+<div id="panel-seals"><div id="ps-seals-header">🔒 ANCIENT SEALS</div><div id="seal-list"></div></div>
 <div id="hud-bottom"><div id="contested-pills"></div></div>
-
-<!-- Notifications -->
 <div id="notification"></div>
-
-<!-- Controls -->
-<div id="controls-hint">
-  DRAG — ROTATE GLOBE<br>
-  SCROLL — ZOOM<br>
-  CLICK — INSPECT ZONE<br>
-  DBL-CLICK — FLY TO<br>
-  R — RESET VIEW
-</div>
-
-<!-- Three.js + OrbitControls -->
+<div id="controls-hint">DRAG — ROTATE<br>SCROLL — ZOOM<br>CLICK — INSPECT<br>DBL-CLICK — FLY<br>G — CREATE GOD<br>R — RESET VIEW</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
 <script>
 'use strict';
-
-// ── Canvas roundRect polyfill (Safari / older Chrome) ──────────────
-if (!CanvasRenderingContext2D.prototype.roundRect) {
-  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
-    this.beginPath();
-    this.moveTo(x+r,y);
-    this.lineTo(x+w-r,y);
-    this.quadraticCurveTo(x+w,y,x+w,y+r);
-    this.lineTo(x+w,y+h-r);
-    this.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-    this.lineTo(x+r,y+h);
-    this.quadraticCurveTo(x,y+h,x,y+h-r);
-    this.lineTo(x,y+r);
-    this.quadraticCurveTo(x,y,x+r,y);
-    this.closePath();
-    return this;
-  };
+if(!CanvasRenderingContext2D.prototype.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.beginPath();this.moveTo(x+r,y);this.lineTo(x+w-r,y);this.quadraticCurveTo(x+w,y,x+w,y+r);this.lineTo(x+w,y+h-r);this.quadraticCurveTo(x+w,y+h,x+w-r,y+h);this.lineTo(x+r,y+h);this.quadraticCurveTo(x,y+h,x,y+h-r);this.lineTo(x,y+r);this.quadraticCurveTo(x,y,x+r,y);this.closePath();return this;};}
+const CFG={WORLD_W:2000,WORLD_H:1400,SPHERE_R:5.0,SPHERE_SEGS:96,ZONE_ELEVATION:.018,BORDER_ELEVATION:.032,POLL_MS:3000,API_BASE:'',STAR_COUNT:8000};
+const NAT={balanced:{fill:0x00d9ff,border:0x00d9ff,op:.28},fire:{fill:0xff4400,border:0xff6600,op:.30},ice:{fill:0x87ceeb,border:0xaaddff,op:.25},darkness:{fill:0x220044,border:0x7700aa,op:.44},nature:{fill:0x00aa22,border:0x44ff66,op:.30},chaos:{fill:0x880066,border:0xdd00dd,op:.28},void:{fill:0x110011,border:0x5500cc,op:.50},greed:{fill:0x996600,border:0xffd700,op:.30},fear:{fill:0x1a0022,border:0x7a00aa,op:.44},arcane:{fill:0x4466cc,border:0xaabbff,op:.28},blood:{fill:0x660000,border:0xcc2222,op:.40},time:{fill:0x888888,border:0xdddddd,op:.22},gravity:{fill:0x223344,border:0x667788,op:.35}};
+const NATURE_DEFAULTS={balanced:'#00d9ff',fire:'#ff6600',ice:'#87ceeb',darkness:'#4b0082',nature:'#228b22',chaos:'#9932cc',void:'#1a1a2e',greed:'#b8860b',fear:'#2d0040',arcane:'#6495ed',blood:'#8b0000',time:'#c0c0c0',gravity:'#2c3e50'};
+let scene,camera,renderer,controls,planetMesh,atmosphereMesh,clock;
+let zoneMeshes={},zoneBorders={},zoneData={},godsData={},worldState={},contestedList=[],zoneSprites={};
+let selectedZone=null,prevOwnership={},createPanelOpen=false;
+const claimEffects=[],orbitalRings=[];
+function worldToVec3(wx,wy,r){const lng=(wx/CFG.WORLD_W)*360-180,lat=90-(wy/CFG.WORLD_H)*180,phi=(90-lat)*Math.PI/180,theta=(lng+180)*Math.PI/180;return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
+function vec3ToWorld(v){const n=v.clone().normalize(),lat=Math.asin(Math.max(-1,Math.min(1,n.y)))*180/Math.PI,lng=Math.atan2(n.z,-n.x)*180/Math.PI;return{wx:(lng+180)/360*CFG.WORLD_W,wy:(90-lat)/180*CFG.WORLD_H};}
+function hexToThree(h){return new THREE.Color(h||'#888');}
+function pointInPolygon(px,py,v){let i=false,j=v.length-1;for(let k=0;k<v.length;k++){const xi=v[k][0],yi=v[k][1],xj=v[j][0],yj=v[j][1];if((yi>py)!==(yj>py)&&px<(xj-xi)*(py-yi)/(yj-yi)+xi)i=!i;j=k;}return i;}
+function getGodForZone(zid){const gid=worldState[zid];return gid?(godsData[gid]||null):null;}
+function getPal(ne){return NAT[ne]||NAT.balanced;}
+function showNotif(msg,color){const el=document.createElement('div');el.className='notif';el.textContent=msg;el.style.borderColor=color||'rgba(0,217,255,.3)';el.style.color=color||'var(--cyan)';document.getElementById('notification').prepend(el);setTimeout(()=>el.remove(),4200);}
+function setLoader(p,m){document.getElementById('loader-bar').style.width=p+'%';if(m)document.getElementById('loader-status').textContent=m;}
+function buildPlanetTexture(zones){
+  const W=2048,H=1024,cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#050918');g.addColorStop(.3,'#060f22');g.addColorStop(.7,'#051020');g.addColorStop(1,'#040b18');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<15000;i++){const x=Math.random()*W,y=Math.random()*H,a=Math.random()*.06;ctx.fillStyle=`rgba(0,50,110,${a})`;ctx.beginPath();ctx.arc(x,y,Math.random()*26+4,0,Math.PI*2);ctx.fill();}
+  const RC={'void_ridge':'#131820','verdant_reach':'#0b1c0d','iron_heartlands':'#171410','ember_barrens':'#1d0d06','bone_marches':'#0c091a','crown_districts':'#131420','tidal_expanse':'#050c18','golden_reaches':'#191306','sunken_archive':'#0a0a0a'};
+  for(const rId in zones){const region=zones[rId],col=RC[rId]||'#111';for(const zone of region.zones){if(!zone.vertices||zone.ancient_seal)continue;const v=zone.vertices;ctx.save();ctx.beginPath();ctx.moveTo(v[0][0]/CFG.WORLD_W*W,v[0][1]/CFG.WORLD_H*H);for(let i=1;i<v.length;i++)ctx.lineTo(v[i][0]/CFG.WORLD_W*W,v[i][1]/CFG.WORLD_H*H);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.025)';ctx.lineWidth=1.5;ctx.stroke();ctx.restore();}}
+  for(const rId in zones){for(const zone of zones[rId].zones){if(!zone.ancient_seal||!zone.vertices)continue;const v=zone.vertices;ctx.save();ctx.beginPath();ctx.moveTo(v[0][0]/CFG.WORLD_W*W,v[0][1]/CFG.WORLD_H*H);for(let i=1;i<v.length;i++)ctx.lineTo(v[i][0]/CFG.WORLD_W*W,v[i][1]/CFG.WORLD_H*H);ctx.closePath();ctx.fillStyle='#040408';ctx.fill();ctx.strokeStyle='rgba(184,134,11,.4)';ctx.lineWidth=3;ctx.stroke();ctx.restore();}}
+  for(let i=0;i<3000;i++){const x=Math.random()*W,y=Math.random()*H,a=Math.random()*.03;ctx.fillStyle=`rgba(200,210,255,${a})`;ctx.fillRect(x,y,Math.random()*3+1,Math.random()*2+1);}
+  const ip=ctx.createRadialGradient(W/2,0,0,W/2,0,H*.12);ip.addColorStop(0,'rgba(180,210,255,.28)');ip.addColorStop(.6,'rgba(150,180,255,.06)');ip.addColorStop(1,'transparent');ctx.fillStyle=ip;ctx.fillRect(0,0,W,H*.12);
+  const is=ctx.createRadialGradient(W/2,H,0,W/2,H,H*.1);is.addColorStop(0,'rgba(180,210,255,.2)');is.addColorStop(.7,'transparent');ctx.fillStyle=is;ctx.fillRect(0,H*.9,W,H*.1);
+  const tex=new THREE.CanvasTexture(cv);tex.mapping=THREE.EquirectangularReflectionMapping;return tex;
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════════════════════════
-const CFG = {
-  WORLD_W: 2000, WORLD_H: 1400,
-  SPHERE_R: 5.0,
-  SPHERE_SEGS: 96,
-  ZONE_ELEVATION: 0.018,    // How far zones sit above the surface
-  BORDER_ELEVATION: 0.030,  // How far border lines sit above zones
-  POLL_MS: 3000,            // API refresh rate
-  API_BASE: '',             // '' = same origin, or 'http://localhost:7331'
-  STAR_COUNT: 8000,
-  IDLE_ROTATION_SPEED: 0.0008,
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════════════
-let scene, camera, renderer, controls;
-let planetMesh, atmosphereMesh;
-let zoneMeshes    = {};   // zone_id → THREE.Mesh (fill)
-let zoneBorders   = {};   // zone_id → THREE.Line (border)
-let zoneData      = {};   // zone_id → zone object from JSON
-let godsData      = {};   // god_id  → god object
-let worldState    = {};   // zone_id → god_id | null
-let contestedList = [];
-let selectedZone  = null;
-let hoveredZone   = null;
-let isAnimating   = false;   // true while claim animation plays
-let clock;
-
-// ═══════════════════════════════════════════════════════════════════
-// UTILITIES
-// ═══════════════════════════════════════════════════════════════════
-
-function worldToSpherical(wx, wy) {
-  const lng = (wx / CFG.WORLD_W) * 360 - 180;
-  const lat = 90 - (wy / CFG.WORLD_H) * 180;
-  return { lat, lng };
+function initScene(){
+  const canvas=document.getElementById('c');
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setSize(window.innerWidth,window.innerHeight);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.2;
+  scene=new THREE.Scene();scene.background=new THREE.Color(0x000008);scene.fog=new THREE.FogExp2(0x000010,.012);
+  camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,.1,1000);camera.position.set(0,3,16);camera.lookAt(0,0,0);clock=new THREE.Clock();
+  controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.05;controls.minDistance=CFG.SPHERE_R*1.4;controls.maxDistance=CFG.SPHERE_R*6;controls.autoRotate=true;controls.autoRotateSpeed=.25;controls.rotateSpeed=.5;controls.enablePan=false;
+  scene.add(new THREE.AmbientLight(0x112244,2));const sun=new THREE.DirectionalLight(0x6688cc,3.5);sun.position.set(20,10,15);scene.add(sun);const rim=new THREE.DirectionalLight(0x001133,1.5);rim.position.set(-15,-5,-10);scene.add(rim);
+  window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+  renderer.domElement.addEventListener('mousemove',onMouseMove);renderer.domElement.addEventListener('mousedown',onMouseDown);renderer.domElement.addEventListener('mouseup',onMouseUp);renderer.domElement.addEventListener('dblclick',onDblClick);window.addEventListener('keydown',onKeyDown);document.getElementById('ps-close').addEventListener('click',clearSelectedZone);
 }
-
-function sphericalToVec3(lat, lng, r) {
-  const phi   = (90 - lat)  * Math.PI / 180;
-  const theta = (lng + 180) * Math.PI / 180;
-  return new THREE.Vector3(
-    -r * Math.sin(phi) * Math.cos(theta),
-     r * Math.cos(phi),
-     r * Math.sin(phi) * Math.sin(theta)
-  );
+function buildStarField(){
+  const p=new Float32Array(CFG.STAR_COUNT*3),c=new Float32Array(CFG.STAR_COUNT*3),s=new Float32Array(CFG.STAR_COUNT);
+  for(let i=0;i<CFG.STAR_COUNT;i++){const r=200+Math.random()*600,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);p[i*3]=r*Math.sin(ph)*Math.cos(th);p[i*3+1]=r*Math.sin(ph)*Math.sin(th);p[i*3+2]=r*Math.cos(ph);const t=Math.random(),cl=t<.3?{r:.4,g:.6,b:1}:t<.7?{r:1,g:.9,b:.7}:{r:.5,g:.7,b:1};c[i*3]=cl.r*(.6+Math.random()*.4);c[i*3+1]=cl.g*(.6+Math.random()*.4);c[i*3+2]=cl.b*(.6+Math.random()*.4);s[i]=.5+Math.random()*2.5;}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(p,3));geo.setAttribute('color',new THREE.BufferAttribute(c,3));geo.setAttribute('size',new THREE.BufferAttribute(s,1));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({size:.8,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:.9})));
 }
-
-function worldToVec3(wx, wy, r) {
-  const { lat, lng } = worldToSpherical(wx, wy);
-  return sphericalToVec3(lat, lng, r);
+function buildPlanet(tex){
+  planetMesh=new THREE.Mesh(new THREE.SphereGeometry(CFG.SPHERE_R,CFG.SPHERE_SEGS,CFG.SPHERE_SEGS),new THREE.MeshPhongMaterial({map:tex,specular:new THREE.Color(0x112244),shininess:8,emissive:new THREE.Color(0x010308),emissiveIntensity:.4}));planetMesh.name='planet';scene.add(planetMesh);
+  atmosphereMesh=new THREE.Mesh(new THREE.SphereGeometry(CFG.SPHERE_R*1.04,64,64),new THREE.MeshPhongMaterial({color:0x0033aa,emissive:0x001155,emissiveIntensity:.6,transparent:true,opacity:.18,side:THREE.BackSide,depthWrite:false}));scene.add(atmosphereMesh);
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(CFG.SPHERE_R*1.09,32,32),new THREE.MeshBasicMaterial({color:0x002244,transparent:true,opacity:.06,side:THREE.BackSide,depthWrite:false})));
 }
-
-function vec3ToWorld(v) {
-  const n = v.clone().normalize();
-  const lat =  Math.asin(Math.max(-1, Math.min(1, n.y))) * 180 / Math.PI;
-  const lng  = Math.atan2(n.z, -n.x) * 180 / Math.PI;
-  const wx   = (lng + 180) / 360 * CFG.WORLD_W;
-  const wy   = (90 - lat)  / 180 * CFG.WORLD_H;
-  return { wx, wy };
+function buildOrbitalRings(){
+  const defs=[{r:CFG.SPHERE_R*1.28,t:new THREE.Euler(.4,0,.2),c:0x00d9ff,o:.12,sp:.0003},{r:CFG.SPHERE_R*1.45,t:new THREE.Euler(-.6,.3,.1),c:0xe94560,o:.08,sp:-.0002},{r:CFG.SPHERE_R*1.65,t:new THREE.Euler(1.1,0,-.4),c:0x7700ff,o:.06,sp:.00015},{r:CFG.SPHERE_R*1.82,t:new THREE.Euler(.2,.8,.9),c:0xffd700,o:.05,sp:-.0001}];
+  for(const d of defs){const m=new THREE.Mesh(new THREE.RingGeometry(d.r-.02,d.r+.02,256),new THREE.MeshBasicMaterial({color:d.c,transparent:true,opacity:d.o,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));m.setRotationFromEuler(d.t);m.userData.speed=d.sp;scene.add(m);orbitalRings.push(m);}
+  const scan=new THREE.Mesh(new THREE.RingGeometry(CFG.SPHERE_R*1.15,CFG.SPHERE_R*1.16,128,1,0,Math.PI*.4),new THREE.MeshBasicMaterial({color:0x00ff88,transparent:true,opacity:.5,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));scan.userData.speed=.004;scene.add(scan);orbitalRings.push(scan);
 }
-
-function hexToThree(hex) {
-  return new THREE.Color(hex || '#888888');
+function buildZoneMesh(zone,fillColor,opacity,elevation){
+  const verts=zone.vertices;if(!verts||verts.length<3)return null;
+  const shape=new THREE.Shape();shape.moveTo(verts[0][0],verts[0][1]);for(let i=1;i<verts.length;i++)shape.lineTo(verts[i][0],verts[i][1]);shape.closePath();
+  const geo=new THREE.ShapeGeometry(shape,3),pos=geo.attributes.position,R=CFG.SPHERE_R+elevation;
+  for(let i=0;i<pos.count;i++){const v=worldToVec3(pos.getX(i),pos.getY(i),R);pos.setXYZ(i,v.x,v.y,v.z);}pos.needsUpdate=true;geo.computeVertexNormals();
+  const mat=new THREE.MeshBasicMaterial({color:fillColor,transparent:true,opacity,side:THREE.FrontSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  const mesh=new THREE.Mesh(geo,mat);mesh.renderOrder=1;mesh.userData.zone_id=zone.zone_id;return mesh;
 }
-
-function hexToRgb(hex) {
-  const h = (hex || '#888').replace('#','');
-  return {
-    r: parseInt(h.slice(0,2), 16),
-    g: parseInt(h.slice(2,4), 16),
-    b: parseInt(h.slice(4,6), 16)
-  };
+function buildZoneBorder(zone,color,opacity,elevation){
+  const verts=zone.vertices;if(!verts)return null;const R=CFG.SPHERE_R+elevation,points=verts.map(([wx,wy])=>worldToVec3(wx,wy,R));points.push(points[0].clone());
+  const mat=new THREE.LineBasicMaterial({color,transparent:true,opacity,depthWrite:false,blending:THREE.AdditiveBlending});
+  const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),mat);line.renderOrder=2;line.userData.zone_id=zone.zone_id;return line;
 }
-
-function pointInPolygon(px, py, verts) {
-  let inside = false, j = verts.length - 1;
-  for (let i = 0; i < verts.length; i++) {
-    const xi = verts[i][0], yi = verts[i][1];
-    const xj = verts[j][0], yj = verts[j][1];
-    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi)
-      inside = !inside;
-    j = i;
-  }
-  return inside;
-}
-
-function getGodForZone(zoneId) {
-  const gid = worldState[zoneId];
-  return gid ? (godsData[gid] || null) : null;
-}
-
-function showNotif(msg, color) {
-  const el = document.createElement('div');
-  el.className = 'notif';
-  el.textContent = msg;
-  el.style.borderColor = color || 'rgba(0,217,255,0.3)';
-  el.style.color = color || 'var(--cyan)';
-  document.getElementById('notification').prepend(el);
-  setTimeout(() => el.remove(), 4200);
-}
-
-function setLoader(pct, msg) {
-  document.getElementById('loader-bar').style.width = pct + '%';
-  if (msg) document.getElementById('loader-status').textContent = msg;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// PLANET TEXTURE — procedural Aethermoor surface
-// ═══════════════════════════════════════════════════════════════════
-
-function buildPlanetTexture(zones) {
-  const W = 2048, H = 1024;
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-
-  // ── Base ocean ─────────────────────────────────────────────────
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0.0, '#060a18');
-  grad.addColorStop(0.3, '#071226');
-  grad.addColorStop(0.7, '#061020');
-  grad.addColorStop(1.0, '#040c1a');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  // ── Subtle ocean depth noise ────────────────────────────────────
-  for (let i = 0; i < 18000; i++) {
-    const x = Math.random() * W, y = Math.random() * H;
-    const a = Math.random() * 0.07;
-    ctx.fillStyle = `rgba(0,60,120,${a})`;
-    const r = Math.random() * 30 + 5;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-  }
-
-  // ── Land masses from zone regions ──────────────────────────────
-  const REGION_COLORS = {
-    void_ridge:      '#151a22',
-    verdant_reach:   '#0d1f10',
-    iron_heartlands: '#1a1610',
-    ember_barrens:   '#201008',
-    bone_marches:    '#0e0a18',
-    crown_districts: '#151520',
-    tidal_expanse:   '#060d1a',
-    golden_reaches:  '#1a1508',
-    sunken_archive:  '#0d0d0d',
-  };
-
-  for (const rId in zones) {
-    const region = zones[rId];
-    const col = REGION_COLORS[rId] || '#111';
-    for (const zone of region.zones) {
-      if (!zone.vertices || zone.ancient_seal) continue;
-      ctx.save();
-      ctx.beginPath();
-      const verts = zone.vertices;
-      // Map 2D world coords to UV texture coords
-      ctx.moveTo(verts[0][0]/CFG.WORLD_W * W, verts[0][1]/CFG.WORLD_H * H);
-      for (let i=1; i<verts.length; i++)
-        ctx.lineTo(verts[i][0]/CFG.WORLD_W * W, verts[i][1]/CFG.WORLD_H * H);
-      ctx.closePath();
-      ctx.fillStyle = col;
-      ctx.fill();
-
-      // Subtle inner glow
-      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.restore();
-    }
-  }
-
-  // ── Ancient seal zones special treatment ───────────────────────
-  for (const rId in zones) {
-    for (const zone of zones[rId].zones) {
-      if (!zone.ancient_seal || !zone.vertices) continue;
-      ctx.save();
-      ctx.beginPath();
-      const verts = zone.vertices;
-      ctx.moveTo(verts[0][0]/CFG.WORLD_W*W, verts[0][1]/CFG.WORLD_H*H);
-      for (let i=1; i<verts.length; i++)
-        ctx.lineTo(verts[i][0]/CFG.WORLD_W*W, verts[i][1]/CFG.WORLD_H*H);
-      ctx.closePath();
-      ctx.fillStyle = '#050508';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(184,134,11,0.3)';
-      ctx.lineWidth = 3; ctx.stroke();
-      ctx.restore();
-    }
-  }
-
-  // ── Fine terrain details ────────────────────────────────────────
-  for (let i = 0; i < 4000; i++) {
-    const x = Math.random()*W, y = Math.random()*H;
-    const a = Math.random()*0.04;
-    ctx.fillStyle = `rgba(200,200,255,${a})`;
-    ctx.fillRect(x, y, Math.random()*3+1, Math.random()*3+1);
-  }
-
-  // ── Polar ice caps ─────────────────────────────────────────────
-  const icePolar = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, H*0.12);
-  icePolar.addColorStop(0,   'rgba(180,210,255,0.25)');
-  icePolar.addColorStop(0.6, 'rgba(150,180,255,0.05)');
-  icePolar.addColorStop(1.0, 'transparent');
-  ctx.fillStyle = icePolar;
-  ctx.fillRect(0, 0, W, H*0.12);
-
-  const iceSouth = ctx.createRadialGradient(W/2, H, 0, W/2, H, H*0.1);
-  iceSouth.addColorStop(0,   'rgba(180,210,255,0.2)');
-  iceSouth.addColorStop(0.7, 'transparent');
-  ctx.fillStyle = iceSouth;
-  ctx.fillRect(0, H*0.9, W, H*0.1);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.mapping = THREE.EquirectangularReflectionMapping;
-  return tex;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// SCENE SETUP
-// ═══════════════════════════════════════════════════════════════════
-
-function initScene() {
-  const canvas = document.getElementById('c');
-
-  // Renderer
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
-
-  // Scene
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000008);
-  scene.fog = new THREE.FogExp2(0x000010, 0.012);
-
-  // Camera
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 3, 16);
-  camera.lookAt(0, 0, 0);
-
-  clock = new THREE.Clock();
-
-  // Controls (OrbitControls)
-  controls = new THREE.OrbitControls(camera, canvas);
-  controls.enableDamping    = true;
-  controls.dampingFactor    = 0.05;
-  controls.minDistance      = CFG.SPHERE_R * 1.4;
-  controls.maxDistance      = CFG.SPHERE_R * 6;
-  controls.autoRotate       = true;
-  controls.autoRotateSpeed  = 0.25;
-  controls.rotateSpeed      = 0.5;
-  controls.enablePan        = false;
-
-  // Lighting
-  const ambLight = new THREE.AmbientLight(0x112244, 2.0);
-  scene.add(ambLight);
-
-  const sunLight = new THREE.DirectionalLight(0x6688cc, 3.5);
-  sunLight.position.set(20, 10, 15);
-  scene.add(sunLight);
-
-  const rimLight = new THREE.DirectionalLight(0x001133, 1.5);
-  rimLight.position.set(-15, -5, -10);
-  scene.add(rimLight);
-
-  // Handle resize
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-  // Mouse / keyboard events — registered here so renderer.domElement exists
-  renderer.domElement.addEventListener('mousemove', onMouseMove);
-  renderer.domElement.addEventListener('mousedown', onMouseDown);
-  renderer.domElement.addEventListener('mouseup',   onMouseUp);
-  renderer.domElement.addEventListener('dblclick',  onDblClick);
-  window.addEventListener('keydown', onKeyDown);
-  document.getElementById('ps-close').addEventListener('click', clearSelectedZone);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// STARS
-// ═══════════════════════════════════════════════════════════════════
-
-function buildStarField() {
-  const positions = new Float32Array(CFG.STAR_COUNT * 3);
-  const colors    = new Float32Array(CFG.STAR_COUNT * 3);
-  const sizes     = new Float32Array(CFG.STAR_COUNT);
-
-  for (let i = 0; i < CFG.STAR_COUNT; i++) {
-    const r = 200 + Math.random() * 600;
-    const theta = Math.random() * Math.PI * 2;
-    const phi   = Math.acos(2 * Math.random() - 1);
-    positions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
-    positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-    positions[i*3+2] = r * Math.cos(phi);
-
-    const t = Math.random();
-    const cold = { r:0.5, g:0.7, b:1.0 };
-    const warm = { r:1.0, g:0.9, b:0.7 };
-    const c = t < 0.3 ? { r:0.4,g:0.6,b:1.0 } : t < 0.7 ? warm : cold;
-    colors[i*3]   = c.r * (0.6 + Math.random()*0.4);
-    colors[i*3+1] = c.g * (0.6 + Math.random()*0.4);
-    colors[i*3+2] = c.b * (0.6 + Math.random()*0.4);
-
-    sizes[i] = 0.5 + Math.random() * 2.5;
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('color',    new THREE.BufferAttribute(colors,    3));
-  geo.setAttribute('size',     new THREE.BufferAttribute(sizes,     1));
-
-  const mat = new THREE.PointsMaterial({
-    size: 0.8, sizeAttenuation: true,
-    vertexColors: true, transparent: true, opacity: 0.9
-  });
-
-  scene.add(new THREE.Points(geo, mat));
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// PLANET
-// ═══════════════════════════════════════════════════════════════════
-
-function buildPlanet(texture) {
-  // Main sphere
-  const geo = new THREE.SphereGeometry(CFG.SPHERE_R, CFG.SPHERE_SEGS, CFG.SPHERE_SEGS);
-  const mat = new THREE.MeshPhongMaterial({
-    map: texture,
-    specular: new THREE.Color(0x112244),
-    shininess: 8,
-    emissive: new THREE.Color(0x010308),
-    emissiveIntensity: 0.4,
-  });
-  planetMesh = new THREE.Mesh(geo, mat);
-  planetMesh.name = 'planet';
-  scene.add(planetMesh);
-
-  // Atmosphere (inner glow — BackSide trick)
-  const atmoGeo = new THREE.SphereGeometry(CFG.SPHERE_R * 1.04, 64, 64);
-  const atmoMat = new THREE.MeshPhongMaterial({
-    color: 0x0033aa,
-    emissive: 0x001155,
-    emissiveIntensity: 0.6,
-    transparent: true,
-    opacity: 0.18,
-    side: THREE.BackSide,
-    depthWrite: false,
-  });
-  atmosphereMesh = new THREE.Mesh(atmoGeo, atmoMat);
-  scene.add(atmosphereMesh);
-
-  // Outer haze
-  const hazeGeo = new THREE.SphereGeometry(CFG.SPHERE_R * 1.09, 32, 32);
-  const hazeMat = new THREE.MeshBasicMaterial({
-    color: 0x002244,
-    transparent: true,
-    opacity: 0.06,
-    side: THREE.BackSide,
-    depthWrite: false,
-  });
-  scene.add(new THREE.Mesh(hazeGeo, hazeMat));
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// ORBITAL RINGS
-// ═══════════════════════════════════════════════════════════════════
-
-const orbitalRings = [];
-
-function buildOrbitalRings() {
-  const ringDefs = [
-    { r: CFG.SPHERE_R*1.28, tilt: new THREE.Euler(0.4, 0, 0.2),          color: 0x00d9ff, opacity: 0.12, speed: 0.0003  },
-    { r: CFG.SPHERE_R*1.45, tilt: new THREE.Euler(-0.6, 0.3, 0.1),        color: 0xe94560, opacity: 0.08, speed: -0.0002 },
-    { r: CFG.SPHERE_R*1.65, tilt: new THREE.Euler(1.1, 0, -0.4),           color: 0x7700ff, opacity: 0.06, speed: 0.00015 },
-    { r: CFG.SPHERE_R*1.82, tilt: new THREE.Euler(0.2, 0.8, 0.9),          color: 0xffd700, opacity: 0.05, speed: -0.0001 },
-  ];
-
-  for (const def of ringDefs) {
-    const geo = new THREE.RingGeometry(def.r - 0.02, def.r + 0.02, 256);
-    const mat = new THREE.MeshBasicMaterial({
-      color: def.color, transparent: true,
-      opacity: def.opacity, side: THREE.DoubleSide,
-      depthWrite: false, blending: THREE.AdditiveBlending,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.setRotationFromEuler(def.tilt);
-    mesh.userData.speed = def.speed;
-    scene.add(mesh);
-    orbitalRings.push(mesh);
-  }
-
-  // Scanning arc — partial ring that sweeps
-  const scanGeo = new THREE.RingGeometry(
-    CFG.SPHERE_R*1.15, CFG.SPHERE_R*1.16, 128, 1, 0, Math.PI*0.4
-  );
-  const scanMat = new THREE.MeshBasicMaterial({
-    color: 0x00ff88, transparent: true,
-    opacity: 0.5, side: THREE.DoubleSide,
-    depthWrite: false, blending: THREE.AdditiveBlending,
-  });
-  const scanMesh = new THREE.Mesh(scanGeo, scanMat);
-  scanMesh.userData.isScanner = true;
-  scanMesh.userData.speed = 0.004;
-  scene.add(scanMesh);
-  orbitalRings.push(scanMesh);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// TERRITORY ZONES
-// ═══════════════════════════════════════════════════════════════════
-
-function buildZoneMesh(zone, fillColor, opacity, elevation) {
-  const verts = zone.vertices;
-  if (!verts || verts.length < 3) return null;
-
-  const shape = new THREE.Shape();
-  shape.moveTo(verts[0][0], verts[0][1]);
-  for (let i = 1; i < verts.length; i++) shape.lineTo(verts[i][0], verts[i][1]);
-  shape.closePath();
-
-  const shapeGeo = new THREE.ShapeGeometry(shape, 3);
-  const pos = shapeGeo.attributes.position;
-  const R = CFG.SPHERE_R + elevation;
-
-  for (let i = 0; i < pos.count; i++) {
-    const wx = pos.getX(i), wy = pos.getY(i);
-    const v = worldToVec3(wx, wy, R);
-    pos.setXYZ(i, v.x, v.y, v.z);
-  }
-  pos.needsUpdate = true;
-  shapeGeo.computeVertexNormals();
-
-  const mat = new THREE.MeshBasicMaterial({
-    color: fillColor,
-    transparent: true,
-    opacity: opacity,
-    side: THREE.FrontSide,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  });
-
-  const mesh = new THREE.Mesh(shapeGeo, mat);
-  mesh.renderOrder = 1;
-  mesh.userData.zone_id = zone.zone_id;
-  return mesh;
-}
-
-function buildZoneBorder(zone, color, opacity, elevation) {
-  const verts = zone.vertices;
-  if (!verts) return null;
-  const R = CFG.SPHERE_R + elevation;
-  const points = verts.map(([wx, wy]) => worldToVec3(wx, wy, R));
-  points.push(points[0].clone());
-
-  const geo = new THREE.BufferGeometry().setFromPoints(points);
-  const mat = new THREE.LineBasicMaterial({
-    color: color, transparent: true, opacity: opacity,
-    depthWrite: false, blending: THREE.AdditiveBlending,
-  });
-  const line = new THREE.Line(geo, mat);
-  line.renderOrder = 2;
-  line.userData.zone_id = zone.zone_id;
-  return line;
-}
-
-function buildAncientSealMesh(zone) {
-  const mesh = buildZoneMesh(zone, 0x100808, 0.6, CFG.ZONE_ELEVATION * 0.5);
-  if (!mesh) return null;
-  mesh.material.blending = THREE.NormalBlending;
-  mesh.material.opacity = 0.5;
-  return mesh;
-}
-
-function initZones(regionsData) {
-  for (const rId in regionsData) {
-    const region = regionsData[rId];
-    for (const zone of region.zones) {
-      zoneData[zone.zone_id] = { ...zone, region_id: rId, region_name: region.region_name };
-
-      if (zone.ancient_seal) {
-        // Ancient seal — special dark mesh with gold border
-        const mesh = buildAncientSealMesh(zone);
-        if (mesh) { scene.add(mesh); zoneMeshes[zone.zone_id] = mesh; }
-
-        const border = buildZoneBorder(zone, 0xb8860b, 0.6, CFG.BORDER_ELEVATION * 0.7);
-        if (border) { scene.add(border); zoneBorders[zone.zone_id] = border; }
-      } else {
-        // Regular zone — initially dim/unclaimed
-        const mesh = buildZoneMesh(zone, 0x112244, 0.12, CFG.ZONE_ELEVATION);
-        if (mesh) { scene.add(mesh); zoneMeshes[zone.zone_id] = mesh; }
-
-        const border = buildZoneBorder(zone, 0x224466, 0.3, CFG.BORDER_ELEVATION);
-        if (border) { scene.add(border); zoneBorders[zone.zone_id] = border; }
-
-        // Zone label sprite (visible on zoom-in)
-        const sprite = buildZoneLabel(zone, null);
-        if (sprite) { scene.add(sprite); zoneSprites[zone.zone_id] = sprite; sprite.material.opacity = 0; }
-      }
-    }
-  }
-}
-
-function updateZoneColors() {
-  for (const zoneId in zoneMeshes) {
-    const mesh = zoneMeshes[zoneId];
-    const border = zoneBorders[zoneId];
-    const zone = zoneData[zoneId];
-    if (!zone || zone.ancient_seal) continue;
-
-    const god = getGodForZone(zoneId);
-
-    if (god) {
-      const col = hexToThree(god.color_primary);
-      mesh.material.color.set(col);
-      mesh.material.opacity = 0.32;
-
-      if (border) {
-        border.material.color.set(col);
-        border.material.opacity = 0.9;
-      }
-
-      // Refresh label with god's color
-      if (zoneSprites[zoneId]) {
-        scene.remove(zoneSprites[zoneId]);
-        const ns = buildZoneLabel(zone, god.color_primary);
-        if (ns) { scene.add(ns); zoneSprites[zoneId] = ns; ns.material.opacity = 0; }
-      }
+function initZones(regionsData){
+  for(const rId in regionsData){const region=regionsData[rId];for(const zone of region.zones){
+    zoneData[zone.zone_id]={...zone,region_id:rId,region_name:region.region_name};
+    if(zone.ancient_seal){
+      const m=buildZoneMesh(zone,0x100808,.5,CFG.ZONE_ELEVATION*.5);if(m){m.material.blending=THREE.NormalBlending;scene.add(m);zoneMeshes[zone.zone_id]=m;}
+      const b=buildZoneBorder(zone,0xb8860b,.6,CFG.BORDER_ELEVATION*.7);if(b){scene.add(b);zoneBorders[zone.zone_id]=b;}
     } else {
-      mesh.material.color.set(0x112244);
-      mesh.material.opacity = 0.10;
-      if (border) {
-        border.material.color.set(0x1a3355);
-        border.material.opacity = 0.25;
-      }
+      const m=buildZoneMesh(zone,0x112244,.09,CFG.ZONE_ELEVATION);if(m){scene.add(m);zoneMeshes[zone.zone_id]=m;}
+      const b=buildZoneBorder(zone,0x1a3355,.22,CFG.BORDER_ELEVATION);if(b){scene.add(b);zoneBorders[zone.zone_id]=b;}
+      const sp=buildZoneLabel(zone,null);if(sp){scene.add(sp);zoneSprites[zone.zone_id]=sp;sp.material.opacity=0;}
     }
-
-    // Selected highlight
-    if (selectedZone && selectedZone.zone_id === zoneId) {
-      mesh.material.opacity = Math.min(1, mesh.material.opacity + 0.3);
-      if (border) border.material.opacity = 1.0;
-    }
+  }}
+}
+function updateZoneColors(){
+  for(const zoneId in zoneMeshes){const mesh=zoneMeshes[zoneId],border=zoneBorders[zoneId],zone=zoneData[zoneId];if(!zone||zone.ancient_seal)continue;
+    const god=getGodForZone(zoneId),sel=selectedZone&&selectedZone.zone_id===zoneId;
+    if(god){const pal=getPal(god.nature_element||'balanced');mesh.material.color.set(pal.fill);mesh.material.opacity=sel?Math.min(.7,pal.op+.28):pal.op;if(border){border.material.color.set(pal.border);border.material.opacity=sel?1:.82;}if(zoneSprites[zoneId]){scene.remove(zoneSprites[zoneId]);const ns=buildZoneLabel(zone,god.color_primary);if(ns){scene.add(ns);zoneSprites[zoneId]=ns;ns.material.opacity=0;}}}
+    else{mesh.material.color.set(0x112244);mesh.material.opacity=sel?.28:.08;if(border){border.material.color.set(0x1a3355);border.material.opacity=sel?.85:.20;}if(zoneSprites[zoneId]){scene.remove(zoneSprites[zoneId]);const ns=buildZoneLabel(zone,null);if(ns){scene.add(ns);zoneSprites[zoneId]=ns;ns.material.opacity=0;}}}
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// ZONE LABELS (sprites above centroids)
-// ═══════════════════════════════════════════════════════════════════
-
-const zoneSprites = {};
-
-function buildZoneLabel(zone, godColor) {
-  const W = 256, H = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.roundRect(4, 4, W-8, H-8, 6);
-  ctx.fill();
-
-  ctx.strokeStyle = godColor || 'rgba(0,217,255,0.5)';
-  ctx.lineWidth = 1.5;
-  ctx.roundRect(4, 4, W-8, H-8, 6);
-  ctx.stroke();
-
-  ctx.fillStyle = godColor || '#00d9ff';
-  ctx.font = 'bold 18px "Orbitron", monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(zone.zone_name, W/2, H/2);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  const sprite = new THREE.Sprite(mat);
-
-  const c = zone.centroid;
-  const pos = worldToVec3(c[0], c[1], CFG.SPHERE_R * 1.12);
-  sprite.position.copy(pos);
-  sprite.scale.set(2.8, 0.7, 1);
-  sprite.renderOrder = 5;
-  sprite.userData.zone_id = zone.zone_id;
-
-  return sprite;
+function buildZoneLabel(zone,godColor){
+  const W=256,H=64,cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,0,0,.55)';ctx.roundRect(4,4,W-8,H-8,5);ctx.fill();ctx.strokeStyle=godColor||'rgba(0,217,255,.4)';ctx.lineWidth=1.5;ctx.roundRect(4,4,W-8,H-8,5);ctx.stroke();ctx.fillStyle=godColor||'#00d9ff';ctx.font='bold 17px Orbitron,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(zone.zone_name,W/2,H/2);
+  const tex=new THREE.CanvasTexture(cv),mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}),sprite=new THREE.Sprite(mat);const c=zone.centroid;sprite.position.copy(worldToVec3(c[0],c[1],CFG.SPHERE_R*1.12));sprite.scale.set(2.8,.7,1);sprite.renderOrder=5;sprite.userData.zone_id=zone.zone_id;return sprite;
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// CLICK / HOVER DETECTION
-// ═══════════════════════════════════════════════════════════════════
-
-const raycaster = new THREE.Raycaster();
-const mouse     = new THREE.Vector2(-9999, -9999);
-let isDragging  = false;
-let dragStart   = { x: 0, y: 0 };
-
-function getZoneAtMouse(event) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x =  ((event.clientX - rect.left) / rect.width)  * 2 - 1;
-  mouse.y = -((event.clientY - rect.top)  / rect.height) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObject(planetMesh);
-  if (!hits.length) return null;
-
-  const { wx, wy } = vec3ToWorld(hits[0].point);
-
-  for (const zoneId in zoneData) {
-    const zone = zoneData[zoneId];
-    if (zone.vertices && pointInPolygon(wx, wy, zone.vertices)) return zone;
-  }
-  return null;
+const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2(-9999,-9999);let isDragging=false,dragStart={x:0,y:0};
+function getZoneAtMouse(e){const rect=renderer.domElement.getBoundingClientRect();mouse.x=((e.clientX-rect.left)/rect.width)*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(mouse,camera);const hits=raycaster.intersectObject(planetMesh);if(!hits.length)return null;const{wx,wy}=vec3ToWorld(hits[0].point);for(const zoneId in zoneData){const zone=zoneData[zoneId];if(zone.vertices&&pointInPolygon(wx,wy,zone.vertices))return zone;}return null;}
+function onMouseMove(e){if(isDragging)return;const zone=getZoneAtMouse(e);updateTooltip(zone,e.clientX,e.clientY);renderer.domElement.style.cursor=zone?'pointer':'crosshair';}
+function onMouseDown(e){isDragging=false;dragStart={x:e.clientX,y:e.clientY};}
+function onMouseUp(e){if(Math.abs(e.clientX-dragStart.x)>5||Math.abs(e.clientY-dragStart.y)>5){isDragging=false;return;}const zone=getZoneAtMouse(e);if(zone)selectZone(zone);else clearSelectedZone();}
+function onDblClick(e){const zone=getZoneAtMouse(e);if(zone)flyToZone(zone);}
+function onKeyDown(e){if(e.key==='r'||e.key==='R')resetCamera();if(e.key==='Escape'){clearSelectedZone();if(createPanelOpen)toggleCreatePanel();}if(e.key==='g'||e.key==='G')toggleCreatePanel();}
+const tooltip=document.getElementById('zone-tooltip');
+function updateTooltip(zone,mx,my){
+  if(!zone){tooltip.classList.remove('visible');return;}const god=getGodForZone(zone.zone_id);
+  document.getElementById('zt-name').textContent=zone.zone_name;document.getElementById('zt-region').textContent=(zone.region_name||zone.region_id||'').toUpperCase();document.getElementById('zt-god').style.color=god?(god.color_primary||'#00d9ff'):'#555';document.getElementById('zt-god').textContent=god?`⚡ ${god.god_name} [${god.nature}]`:(zone.ancient_seal?'🔒 ANCIENT SEAL':'🔓 Unclaimed');document.getElementById('zt-nature').textContent=`NATURE: ${(zone.base_nature||'?').toUpperCase()}`;document.getElementById('zt-lore').textContent=zone.lore||'';document.getElementById('zt-seal').textContent=zone.ancient_seal?`🔒 ${(zone.sealed_god||'').replace(/_/g,' ').toUpperCase()}`:'';const nb=zone.neighboring_zones||[];document.getElementById('zt-neighbors').textContent=nb.length?`BORDERS: ${nb.slice(0,3).join(', ')}${nb.length>3?'…':''}`:'';
+  tooltip.style.left=mx+'px';tooltip.style.top=Math.min(my,window.innerHeight-180)+'px';tooltip.classList.add('visible');
 }
-
-function onMouseMove(event) {
-  if (isDragging) return;
-  const zone = getZoneAtMouse(event);
-  hoveredZone = zone;
-  updateTooltip(zone, event.clientX, event.clientY);
-  renderer.domElement.style.cursor = zone ? 'pointer' : 'crosshair';
+function selectZone(zone){
+  selectedZone=zone;const panel=document.getElementById('panel-selected'),god=getGodForZone(zone.zone_id);
+  document.getElementById('ps-zone-name').textContent=zone.zone_name;document.getElementById('ps-zone-name').style.color=god?god.color_primary:'#00d9ff';document.getElementById('ps-region').textContent=(zone.region_name||'').toUpperCase();document.getElementById('ps-lore').textContent=zone.lore||'—';
+  if(god){document.getElementById('ps-god').textContent=god.god_name;document.getElementById('ps-god').style.color=god.color_primary;document.getElementById('ps-nature').textContent=god.nature;document.getElementById('ps-nature').style.color=god.color_primary;document.getElementById('ps-followers').textContent=(god.follower_count||0).toLocaleString();const cl=Object.values(zoneData).filter(z=>!z.ancient_seal).length,owned=Object.values(worldState).filter(g=>g===god.god_id).length;document.getElementById('ps-territory').textContent=(cl>0?(owned/cl*100):0).toFixed(1)+'%';document.getElementById('btn-release').style.display='block';}
+  else{document.getElementById('ps-god').textContent=zone.ancient_seal?'ANCIENT SEAL':'Unclaimed';document.getElementById('ps-god').style.color=zone.ancient_seal?'#ffd700':'#555';document.getElementById('ps-nature').textContent=zone.base_nature||'—';document.getElementById('ps-nature').style.color='#888';document.getElementById('ps-followers').textContent='—';document.getElementById('ps-territory').textContent='—';document.getElementById('btn-release').style.display='none';}
+  const nb=zone.neighboring_zones||[];document.getElementById('ps-neighbors').textContent=nb.length?nb.join(', '):'—';panel.classList.add('visible');updateZoneColors();
 }
-
-function onMouseDown(event) {
-  isDragging = false;
-  dragStart = { x: event.clientX, y: event.clientY };
+function clearSelectedZone(){selectedZone=null;document.getElementById('panel-selected').classList.remove('visible');updateZoneColors();}
+function flyToSelectedZone(){if(selectedZone)flyToZone(selectedZone);}
+async function releaseSelectedZone(){
+  if(!selectedZone)return;const zoneId=selectedZone.zone_id;if(zoneData[zoneId]?.ancient_seal){showNotif('⛔ ANCIENT SEALS CANNOT BE RELEASED','#ffd700');return;}
+  try{const res=await fetch(`${CFG.API_BASE}/api/release/${zoneId}`,{method:'POST'});const data=await res.json();if(data.ok){showNotif(`🔓 ${zoneId.replace(/_/g,' ').toUpperCase()} RELEASED`,'#e94560');await fetchState();selectZone(zoneData[zoneId]);}else showNotif(`⚠ ${data.error}`,'#e94560');}catch(e){showNotif('⚠ SERVER OFFLINE','#e94560');}
 }
-
-function onMouseUp(event) {
-  const dx = Math.abs(event.clientX - dragStart.x);
-  const dy = Math.abs(event.clientY - dragStart.y);
-  if (dx > 5 || dy > 5) { isDragging = false; return; }
-
-  const zone = getZoneAtMouse(event);
-  if (zone) selectZone(zone);
-  else clearSelectedZone();
+function flyToZone(zone){if(!zone.centroid)return;const t=worldToVec3(zone.centroid[0],zone.centroid[1],1).normalize();controls.autoRotate=false;animateCameraTo(t.multiplyScalar(CFG.SPHERE_R*2.2),new THREE.Vector3(0,0,0),1400,()=>{controls.autoRotate=true;});}
+function resetCamera(){controls.autoRotate=false;animateCameraTo(new THREE.Vector3(0,3,16),new THREE.Vector3(0,0,0),1000,()=>{controls.autoRotate=true;});}
+function animateCameraTo(tp,tl,dur,cb){const sp=camera.position.clone(),st=performance.now();(function s(n){const t=Math.min((n-st)/dur,1),e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;camera.position.lerpVectors(sp,tp,e);controls.target.lerp(tl,e*.1);controls.update();if(t<1)requestAnimationFrame(s);else if(cb)cb();})(st);}
+function triggerClaimAnimation(zoneId,godColor){
+  const zone=zoneData[zoneId];if(!zone||!zone.centroid)return;const col=hexToThree(godColor),origin=worldToVec3(zone.centroid[0],zone.centroid[1],CFG.SPHERE_R),normal=origin.clone().normalize();
+  for(let i=0;i<3;i++){const ring=new THREE.Mesh(new THREE.RingGeometry(.01,.04,64),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));ring.position.copy(origin);ring.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),normal);ring.userData={type:'shockwave',delay:i*.18,age:-i*.18,maxR:1.2+i*.3};scene.add(ring);claimEffects.push(ring);}
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.02,.08,8,16,1,true),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.7,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));beam.position.copy(origin.clone().add(normal.clone().multiplyScalar(4)));beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),normal);beam.userData={type:'beam',age:0,life:2.5};scene.add(beam);claimEffects.push(beam);
+  showNotif('⚡ TERRITORY CLAIMED',godColor);controls.autoRotate=false;setTimeout(()=>{controls.autoRotate=true;},2500);
 }
-
-function onDblClick(event) {
-  const zone = getZoneAtMouse(event);
-  if (zone) flyToZone(zone);
+function updateClaimEffects(dt){for(let i=claimEffects.length-1;i>=0;i--){const obj=claimEffects[i];obj.userData.age+=dt;if(obj.userData.type==='shockwave'){const a=obj.userData.age;if(a<0)continue;const t=a/1.2;if(t>1){scene.remove(obj);claimEffects.splice(i,1);continue;}const r=.05+t*obj.userData.maxR;obj.scale.set(r,r,r);obj.material.opacity=(1-t)*.9;}else if(obj.userData.type==='beam'){const t=obj.userData.age/obj.userData.life;if(t>1){scene.remove(obj);claimEffects.splice(i,1);continue;}obj.material.opacity=t<.15?(t/.15)*.7:(1-t)*.7;obj.scale.y=1+t*.5;}}}
+function updateGodPanel(){
+  const gods=Object.values(godsData).sort((a,b)=>b.follower_count-a.follower_count);document.getElementById('god-count').textContent=gods.length;const list=document.getElementById('god-list');list.innerHTML='';
+  for(const god of gods){const zones=Object.values(worldState).filter(g=>g===god.god_id).length;const row=document.createElement('div');row.className='god-row';row.innerHTML=`<div class="god-color-bar" style="background:${god.color_primary};box-shadow:0 0 6px ${god.color_primary}55"></div><div class="god-info"><div class="god-name" style="color:${god.color_primary}">${god.god_name}${god.is_protagonist?'<span class="hero-badge">HERO</span>':''}</div><div class="god-meta">${god.nature} · ${(god.follower_count||0).toLocaleString()} followers</div></div><div class="god-zones-badge">${zones}z</div>`;row.addEventListener('click',()=>{const zid=Object.entries(worldState).find(([z,g])=>g===god.god_id)?.[0];if(zid&&zoneData[zid])flyToZone(zoneData[zid]);});list.appendChild(row);}
 }
-
-function onKeyDown(event) {
-  if (event.key === 'r' || event.key === 'R') resetCamera();
-  if (event.key === 'Escape') clearSelectedZone();
+function updateTopStats(){
+  const gods=Object.keys(godsData).length,claimed=Object.values(worldState).filter(v=>v&&typeof v==='string').length,claimable=Object.values(zoneData).filter(z=>!z.ancient_seal).length,followers=Object.values(godsData).reduce((s,g)=>s+(g.follower_count||0),0),warPct=Math.round(Math.min(100,contestedList.length/10*100));
+  document.getElementById('stat-gods').textContent=gods;document.getElementById('stat-zones').textContent=`${claimed}/${claimable}`;document.getElementById('stat-contested').textContent=contestedList.length;document.getElementById('stat-followers').textContent=followers.toLocaleString();document.getElementById('stat-war').textContent=warPct+'%';document.getElementById('hud-time').textContent=new Date().toUTCString().slice(17,25)+' UTC';
 }
-
-// Event listeners registered in initScene() after renderer is created
-
-// ═══════════════════════════════════════════════════════════════════
-// TOOLTIP
-// ═══════════════════════════════════════════════════════════════════
-
-const tooltip = document.getElementById('zone-tooltip');
-
-function updateTooltip(zone, mx, my) {
-  if (!zone) { tooltip.classList.remove('visible'); return; }
-
-  const god = getGodForZone(zone.zone_id);
-  document.getElementById('zt-name').textContent  = zone.zone_name;
-  document.getElementById('zt-region').textContent = zone.region_name || zone.region_id;
-  document.getElementById('zt-god').style.color = god ? (god.color_primary || '#00d9ff') : '#666';
-  document.getElementById('zt-god').textContent = god
-    ? `⚡ ${god.god_name} [${god.nature}]` : '🔓 Unclaimed';
-  document.getElementById('zt-lore').textContent = zone.lore || '';
-  document.getElementById('zt-seal').textContent = zone.ancient_seal
-    ? `🔒 ANCIENT SEAL — ${(zone.sealed_god || '').replace(/_/g,' ').toUpperCase()}` : '';
-
-  const H = window.innerHeight;
-  tooltip.style.left = mx + 'px';
-  tooltip.style.top  = Math.min(my, H - 160) + 'px';
-  tooltip.classList.add('visible');
+function updateContestedPills(){
+  const c=document.getElementById('contested-pills');c.innerHTML='';for(const x of contestedList.slice(0,6)){const gA=godsData[x.god_a],gB=godsData[x.god_b];if(!gA||!gB)continue;const p=document.createElement('div');p.className='contested-pill';p.style.borderColor=(gA.color_primary||'#ffcc00')+'80';p.textContent=`⚔ ${gA.god_name} vs ${gB.god_name}`;c.appendChild(p);}
+  if(!contestedList.length){const p=document.createElement('div');p.className='contested-pill';p.style.opacity='.22';p.textContent='— NO ACTIVE CONFLICTS —';c.appendChild(p);}
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// SELECTED ZONE PANEL
-// ═══════════════════════════════════════════════════════════════════
-
-function selectZone(zone) {
-  selectedZone = zone;
-  const panel = document.getElementById('panel-selected');
-  const god   = getGodForZone(zone.zone_id);
-
-  document.getElementById('ps-zone-name').textContent = zone.zone_name;
-  document.getElementById('ps-zone-name').style.color = god ? god.color_primary : '#00d9ff';
-  document.getElementById('ps-region').textContent = zone.region_name || zone.region_id;
-  document.getElementById('ps-lore').textContent = zone.lore || '—';
-
-  if (god) {
-    document.getElementById('ps-god').textContent       = god.god_name;
-    document.getElementById('ps-god').style.color       = god.color_primary;
-    document.getElementById('ps-nature').textContent    = god.nature;
-    document.getElementById('ps-nature').style.color    = god.color_primary;
-    document.getElementById('ps-followers').textContent = god.follower_count?.toLocaleString() || '0';
-    const pct = getGodTerritoryPct(god.god_id);
-    document.getElementById('ps-territory').textContent = pct.toFixed(1) + '%';
-  } else {
-    document.getElementById('ps-god').textContent       = zone.ancient_seal ? 'ANCIENT SEAL' : 'Unclaimed';
-    document.getElementById('ps-god').style.color       = zone.ancient_seal ? '#ffd700' : '#555';
-    document.getElementById('ps-nature').textContent    = zone.base_nature || '—';
-    document.getElementById('ps-nature').style.color    = '#888';
-    document.getElementById('ps-followers').textContent = '—';
-    document.getElementById('ps-territory').textContent = '—';
-  }
-
-  panel.classList.add('visible');
-  updateZoneColors();
+function updateSealPanel(){
+  const list=document.getElementById('seal-list');list.innerHTML='';
+  for(const zoneId in zoneData){const zone=zoneData[zoneId];if(!zone.ancient_seal)continue;const sd=(worldState.__ancient_seals||{})[zoneId],cl=sd?sd.crack_level:(zone.crack_level||0),mx=sd?sd.max_cracks:5,status=sd?sd.status:(cl>=3?'awakened':cl>0?'stirring':'sleeping');const pips=Array.from({length:mx},(_,i)=>`<div class="crack-pip ${i<cl?'filled':'empty'}"></div>`).join('');const row=document.createElement('div');row.className='seal-row';row.innerHTML=`<div class="seal-name" style="color:#ffd70099">${zone.zone_name.replace('Seal of ','')}</div><div class="seal-cracks">${pips}</div><div class="seal-status seal-${status}">${status.toUpperCase()}</div>`;list.appendChild(row);}
 }
-
-function clearSelectedZone() {
-  selectedZone = null;
-  document.getElementById('panel-selected').classList.remove('visible');
-  updateZoneColors();
+let contestedTime=0;
+function updateContestedBorders(dt){contestedTime+=dt;const pulse=(Math.sin(contestedTime*6)+1)/2;for(const c of contestedList){const bA=zoneBorders[c.zone_a],bB=zoneBorders[c.zone_b],gA=godsData[c.god_a],gB=godsData[c.god_b];if(!gA||!gB)continue;const bl=hexToThree(gA.color_primary).lerp(hexToThree(gB.color_primary),pulse);if(bA){bA.material.color.copy(bl);bA.material.opacity=.5+pulse*.5;}if(bB){bB.material.color.copy(bl);bB.material.opacity=.5+pulse*.5;}}}
+let sealTime=0;
+const SEAL_COL={seal_of_balance:0x00d9ff,seal_of_fear:0x7700aa,seal_of_greed:0xb8860b};
+function updateAncientSeals(dt){sealTime+=dt;let idx=0;for(const zoneId in zoneData){const zone=zoneData[zoneId];if(!zone.ancient_seal)continue;const border=zoneBorders[zoneId];if(!border)continue;const col=new THREE.Color(SEAL_COL[zoneId]||0x888888),pulse=(Math.sin(sealTime*1.5+idx++)+1)/2,sd=(worldState.__ancient_seals||{})[zoneId],cl=sd?sd.crack_level:(zone.crack_level||0);border.material.color.copy(col);border.material.opacity=Math.min(1,.3+pulse*.4+cl*.1);}}
+function toggleCreatePanel(){createPanelOpen=!createPanelOpen;document.getElementById('panel-create').classList.toggle('visible',createPanelOpen);if(createPanelOpen)onNatureChange();}
+function onNatureChange(){const ne=document.getElementById('pc-nature').value,col=NATURE_DEFAULTS[ne]||'#00d9ff';document.getElementById('pc-color').value=col;document.getElementById('pc-color-preview').style.background=col;}
+document.getElementById('pc-color').addEventListener('input',function(){document.getElementById('pc-color-preview').style.background=this.value;});
+async function summonGod(){
+  const name=document.getElementById('pc-name').value.trim();if(!name){setPCStatus('⚠ NAME REQUIRED','#e94560');return;}
+  const ne=document.getElementById('pc-nature').value,followers=parseInt(document.getElementById('pc-followers').value)||0,color=document.getElementById('pc-color').value,lore=document.getElementById('pc-lore').value.trim();
+  setPCStatus('SUMMONING...','#00d9ff');document.getElementById('btn-summon').disabled=true;
+  try{const res=await fetch(`${CFG.API_BASE}/api/god/create`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({god_name:name,nature_element:ne,nature:ne.charAt(0).toUpperCase()+ne.slice(1),follower_count:followers,color_primary:color,lore_description:lore})});const data=await res.json();if(data.ok){setPCStatus(`✓ ${name.toUpperCase()} SUMMONED`,'#00ff88');document.getElementById('pc-name').value='';document.getElementById('pc-lore').value='';document.getElementById('pc-followers').value='0';showNotif(`⚡ ${name.toUpperCase()} HAS ARRIVED`,color);await fetchState();setTimeout(()=>toggleCreatePanel(),1200);}else setPCStatus(`⚠ ${data.error}`,'#e94560');}catch(e){setPCStatus('⚠ SERVER OFFLINE — ADD TO gods.json','#ffd700');}
+  document.getElementById('btn-summon').disabled=false;
 }
-
-function getGodTerritoryPct(godId) {
-  const claimable = Object.values(zoneData).filter(z => !z.ancient_seal).length;
-  const owned = Object.values(worldState).filter(gid => gid === godId).length;
-  return claimable > 0 ? (owned / claimable * 100) : 0;
+function setPCStatus(msg,col){const el=document.getElementById('pc-status');el.textContent=msg;el.style.color=col||'rgba(255,255,255,.4)';}
+async function fetchState(){
+  try{const[sRes,gRes]=await Promise.all([fetch(CFG.API_BASE+'/api/state'),fetch(CFG.API_BASE+'/api/gods')]);if(!sRes.ok||!gRes.ok)return;const state=await sRes.json(),godsJson=await gRes.json();
+    godsData={};for(const g of(godsJson.gods||[]))godsData[g.god_id]=g;
+    const ownership=state.zone_ownership||{};for(const[zId,gId]of Object.entries(ownership)){if(gId&&prevOwnership[zId]!==gId){const god=godsData[gId];if(god)triggerClaimAnimation(zId,god.color_primary);}}
+    prevOwnership={...ownership};worldState=ownership;worldState.__ancient_seals=state.ancient_seals||{};contestedList=state.contested_borders||[];
+    updateZoneColors();updateGodPanel();updateTopStats();updateContestedPills();updateSealPanel();
+  }catch(e){}
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// CAMERA
-// ═══════════════════════════════════════════════════════════════════
-
-function flyToZone(zone) {
-  if (!zone.centroid) return;
-  const target = worldToVec3(zone.centroid[0], zone.centroid[1], 1);
-  target.normalize();
-
-  const targetDist = CFG.SPHERE_R * 2.2;
-  const targetPos  = target.clone().multiplyScalar(targetDist);
-
-  controls.autoRotate = false;
-  animateCameraTo(targetPos, new THREE.Vector3(0,0,0), 1400, () => {
-    controls.autoRotate = true;
-  });
+function animate(){
+  requestAnimationFrame(animate);const dt=clock.getDelta();
+  for(const ring of orbitalRings)ring.rotation.z+=ring.userData.speed;
+  if(atmosphereMesh){const ap=(Math.sin(clock.elapsedTime*.7)+1)/2;atmosphereMesh.material.opacity=.13+ap*.07;}
+  updateClaimEffects(dt);updateContestedBorders(dt);updateAncientSeals(dt);
+  const dist=camera.position.length();for(const zId in zoneSprites){const sp=zoneSprites[zId];const th=CFG.SPHERE_R*2.8;let op=dist<th?Math.min(1,(th-dist)/(th-CFG.SPHERE_R*1.6)):0;const dot=sp.position.clone().normalize().dot(camera.position.clone().normalize());if(dot<.12)op=0;sp.material.opacity+=(op-sp.material.opacity)*.08;}
+  controls.update();renderer.render(scene,camera);
 }
-
-function resetCamera() {
-  controls.autoRotate = false;
-  animateCameraTo(
-    new THREE.Vector3(0, 3, 16),
-    new THREE.Vector3(0, 0, 0),
-    1000,
-    () => { controls.autoRotate = true; }
-  );
+async function init(){
+  setLoader(10,'INITIALIZING SCENE...');initScene();setLoader(25,'GENERATING STAR FIELD...');buildStarField();setLoader(38,'LOADING WORLD DATA...');
+  let regionsData={},godsJson={gods:[]},stateJson={};
+  try{const[rR,gR,sR]=await Promise.all([fetch(CFG.API_BASE+'/api/regions'),fetch(CFG.API_BASE+'/api/gods'),fetch(CFG.API_BASE+'/api/state')]);regionsData=await rR.json();godsJson=await gR.json();stateJson=await sR.json();}
+  catch(e){setLoader(42,'SERVER OFFLINE — DEMO MODE');regionsData=DEMO_REGIONS;godsJson=DEMO_GODS;stateJson=DEMO_STATE;}
+  setLoader(52,'RENDERING PLANET SURFACE...');buildPlanet(buildPlanetTexture(regionsData));setLoader(65,'PROJECTING TERRITORIES...');initZones(regionsData);setLoader(75,'BUILDING ORBITAL RINGS...');buildOrbitalRings();
+  setLoader(85,'LOADING GOD REGISTRY...');godsData={};for(const g of(godsJson.gods||[]))godsData[g.god_id]=g;worldState=stateJson.zone_ownership||{};worldState.__ancient_seals=stateJson.ancient_seals||{};contestedList=stateJson.contested_borders||[];prevOwnership={...worldState};
+  setLoader(95,'SYNCHRONIZING TERRITORIES...');updateZoneColors();updateGodPanel();updateTopStats();updateContestedPills();updateSealPanel();
+  setLoader(100,'AETHERMOOR ONLINE');await new Promise(r=>setTimeout(r,600));document.getElementById('loader').classList.add('hidden');setInterval(fetchState,CFG.POLL_MS);animate();
 }
-
-function animateCameraTo(targetPos, targetLook, durationMs, onDone) {
-  const startPos  = camera.position.clone();
-  const startTime = performance.now();
-
-  function step(now) {
-    const t = Math.min((now - startTime) / durationMs, 1);
-    const e = t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; // easeInOutCubic
-    camera.position.lerpVectors(startPos, targetPos, e);
-    controls.target.lerp(targetLook, e * 0.1);
-    controls.update();
-    if (t < 1) requestAnimationFrame(step);
-    else if (onDone) onDone();
-  }
-  requestAnimationFrame(step);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// CLAIM ANIMATION — "THE GODFALL"
-// ═══════════════════════════════════════════════════════════════════
-
-const claimEffects = [];
-
-function triggerClaimAnimation(zoneId, godColor) {
-  const zone = zoneData[zoneId];
-  if (!zone || !zone.centroid) return;
-
-  const col = hexToThree(godColor);
-  const origin = worldToVec3(zone.centroid[0], zone.centroid[1], CFG.SPHERE_R);
-
-  // Shockwave ring
-  for (let i = 0; i < 3; i++) {
-    const rGeo = new THREE.RingGeometry(0.01, 0.04, 64);
-    const rMat = new THREE.MeshBasicMaterial({
-      color: col, transparent: true, opacity: 0.9,
-      side: THREE.DoubleSide, depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const ring = new THREE.Mesh(rGeo, rMat);
-
-    // Orient ring to face away from sphere center
-    const normal = origin.clone().normalize();
-    ring.position.copy(origin);
-    ring.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), normal);
-
-    ring.userData = { type: 'shockwave', delay: i * 0.18, age: -i * 0.18, maxR: 1.2 + i*0.3 };
-    scene.add(ring);
-    claimEffects.push(ring);
-  }
-
-  // Beam of light shooting from zone into space
-  const beamDir = origin.clone().normalize();
-  const beamGeo = new THREE.CylinderGeometry(0.02, 0.08, 8, 16, 1, true);
-  const beamMat = new THREE.MeshBasicMaterial({
-    color: col, transparent: true, opacity: 0.7,
-    side: THREE.DoubleSide, depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  });
-  const beam = new THREE.Mesh(beamGeo, beamMat);
-  beam.position.copy(origin.clone().add(beamDir.clone().multiplyScalar(4)));
-  beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), beamDir);
-  beam.userData = { type: 'beam', age: 0, life: 2.5 };
-  scene.add(beam);
-  claimEffects.push(beam);
-
-  // Notification
-  showNotif(`⚡ TERRITORY CLAIMED`, godColor);
-
-  // Camera pulse — brief autorotate pause
-  controls.autoRotate = false;
-  setTimeout(() => { controls.autoRotate = true; }, 2500);
-}
-
-function updateClaimEffects(dt) {
-  for (let i = claimEffects.length - 1; i >= 0; i--) {
-    const obj = claimEffects[i];
-    obj.userData.age += dt;
-
-    if (obj.userData.type === 'shockwave') {
-      const a = obj.userData.age;
-      if (a < 0) continue;
-      const t = a / 1.2;
-      if (t > 1) { scene.remove(obj); claimEffects.splice(i,1); continue; }
-      const r = 0.05 + t * obj.userData.maxR;
-      obj.scale.set(r, r, r);
-      obj.material.opacity = (1 - t) * 0.9;
-    } else if (obj.userData.type === 'beam') {
-      const t = obj.userData.age / obj.userData.life;
-      if (t > 1) { scene.remove(obj); claimEffects.splice(i,1); continue; }
-      obj.material.opacity = t < 0.15 ? (t / 0.15) * 0.7 : (1 - t) * 0.7;
-      obj.scale.y = 1 + t * 0.5;
-    }
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// UI UPDATES
-// ═══════════════════════════════════════════════════════════════════
-
-function updateGodPanel() {
-  const gods = Object.values(godsData).sort((a,b) => b.follower_count - a.follower_count);
-  const list  = document.getElementById('god-list');
-  document.getElementById('god-count').textContent = gods.length;
-  list.innerHTML = '';
-
-  for (const god of gods) {
-    const row = document.createElement('div');
-    row.className = 'god-row';
-    const zones = Object.values(worldState).filter(gid => gid === god.god_id).length;
-
-    row.innerHTML = `
-      <div class="god-color-bar" style="background:${god.color_primary}"></div>
-      <div class="god-info">
-        <div class="god-name" style="color:${god.color_primary}">${god.god_name}</div>
-        <div class="god-meta">${god.nature} · ${god.follower_count?.toLocaleString()||0} followers</div>
-      </div>
-      <div class="god-zones-badge">${zones}z</div>
-    `;
-    row.addEventListener('click', () => {
-      // Fly to first owned zone
-      const ownedZoneId = Object.entries(worldState).find(([z,g]) => g === god.god_id)?.[0];
-      if (ownedZoneId && zoneData[ownedZoneId]) flyToZone(zoneData[ownedZoneId]);
-    });
-    list.appendChild(row);
-  }
-}
-
-function updateTopStats() {
-  const gods      = Object.keys(godsData).length;
-  const claimed   = Object.values(worldState).filter(v => v !== null).length;
-  const claimable = Object.values(zoneData).filter(z => !z.ancient_seal).length;
-  const contested = contestedList.length;
-  const followers = Object.values(godsData).reduce((s,g) => s + (g.follower_count||0), 0);
-
-  document.getElementById('stat-gods').textContent      = gods;
-  document.getElementById('stat-zones').textContent     = `${claimed}/${claimable}`;
-  document.getElementById('stat-contested').textContent = contested;
-  document.getElementById('stat-followers').textContent = followers.toLocaleString();
-  document.getElementById('hud-time').textContent       = new Date().toUTCString().slice(17,25) + ' UTC';
-}
-
-function updateContestedPills() {
-  const container = document.getElementById('contested-pills');
-  container.innerHTML = '';
-  for (const c of contestedList.slice(0,6)) {
-    const gA = godsData[c.god_a];
-    const gB = godsData[c.god_b];
-    if (!gA || !gB) continue;
-    const pill = document.createElement('div');
-    pill.className = 'contested-pill';
-    pill.style.borderColor = gA.color_primary + '80';
-    pill.textContent = `⚔ ${gA.god_name} vs ${gB.god_name}`;
-    container.appendChild(pill);
-  }
-  if (!contestedList.length) {
-    const p = document.createElement('div');
-    p.className = 'contested-pill';
-    p.style.opacity = '0.3';
-    p.textContent = '— NO ACTIVE CONFLICTS —';
-    container.appendChild(p);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// CONTESTED BORDER ANIMATION
-// ═══════════════════════════════════════════════════════════════════
-
-let contestedBorderTime = 0;
-
-function updateContestedBorders(dt) {
-  contestedBorderTime += dt;
-  const pulse = (Math.sin(contestedBorderTime * 6) + 1) / 2;
-
-  for (const c of contestedList) {
-    const borderA = zoneBorders[c.zone_a];
-    const borderB = zoneBorders[c.zone_b];
-    const gA = godsData[c.god_a];
-    const gB = godsData[c.god_b];
-    if (!gA || !gB) continue;
-
-    const colA = hexToThree(gA.color_primary);
-    const colB = hexToThree(gB.color_primary);
-    const blended = colA.clone().lerp(colB, pulse);
-
-    if (borderA) { borderA.material.color.copy(blended); borderA.material.opacity = 0.5 + pulse * 0.5; }
-    if (borderB) { borderB.material.color.copy(blended); borderB.material.opacity = 0.5 + pulse * 0.5; }
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// ANCIENT SEAL ANIMATION
-// ═══════════════════════════════════════════════════════════════════
-
-let sealTime = 0;
-const SEAL_COLORS = {
-  seal_of_balance: 0x00d9ff,
-  seal_of_fear:    0x7700aa,
-  seal_of_greed:   0xb8860b,
-};
-
-function updateAncientSeals(dt) {
-  sealTime += dt;
-  for (const zoneId in zoneData) {
-    const zone = zoneData[zoneId];
-    if (!zone.ancient_seal) continue;
-
-    const border = zoneBorders[zoneId];
-    if (!border) continue;
-
-    const col = new THREE.Color(SEAL_COLORS[zoneId] || 0x888888);
-    const pulse = (Math.sin(sealTime * 1.5 + Object.keys(SEAL_COLORS).indexOf(zoneId)) + 1) / 2;
-    const sealData = (worldState.__ancient_seals || {})[zoneId];
-    const crackLevel = sealData ? sealData.crack_level : zone.crack_level || 0;
-    const intensity = 0.3 + pulse * 0.4 + crackLevel * 0.1;
-
-    border.material.color.copy(col);
-    border.material.opacity = Math.min(1, intensity);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// API POLLING
-// ═══════════════════════════════════════════════════════════════════
-
-let prevOwnership = {};
-
-async function fetchState() {
-  try {
-    const [stateRes, godsRes] = await Promise.all([
-      fetch(CFG.API_BASE + '/api/state'),
-      fetch(CFG.API_BASE + '/api/gods'),
-    ]);
-    if (!stateRes.ok || !godsRes.ok) return;
-
-    const state = await stateRes.json();
-    const godsJson = await godsRes.json();
-
-    // Update gods registry
-    godsData = {};
-    for (const g of (godsJson.gods || [])) godsData[g.god_id] = g;
-
-    // Detect claim changes
-    const ownership = state.zone_ownership || {};
-    for (const [zId, gId] of Object.entries(ownership)) {
-      if (gId && prevOwnership[zId] !== gId) {
-        const god = godsData[gId];
-        if (god) triggerClaimAnimation(zId, god.color_primary);
-      }
-    }
-    prevOwnership = { ...ownership };
-
-    worldState = ownership;
-    worldState.__ancient_seals = state.ancient_seals || {};
-    contestedList = state.contested_borders || [];
-
-    updateZoneColors();
-    updateGodPanel();
-    updateTopStats();
-    updateContestedPills();
-  } catch (e) {
-    // Server offline — silently continue
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// RENDER LOOP
-// ═══════════════════════════════════════════════════════════════════
-
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = clock.getDelta();
-
-  // Orbital rings rotation
-  for (const ring of orbitalRings) {
-    ring.rotation.z += ring.userData.speed;
-  }
-
-  // Atmosphere pulse
-  if (atmosphereMesh) {
-    const ap = (Math.sin(clock.elapsedTime * 0.7) + 1) / 2;
-    atmosphereMesh.material.opacity = 0.14 + ap * 0.06;
-  }
-
-  // Claim effects
-  updateClaimEffects(dt);
-
-  // Contested border flash
-  updateContestedBorders(dt);
-
-  // Ancient seal pulse
-  updateAncientSeals(dt);
-
-  // Zone labels: show when zoomed in
-  const dist = camera.position.length();
-  for (const zId in zoneSprites) {
-    const sp = zoneSprites[zId];
-    const threshold = CFG.SPHERE_R * 2.8;
-    sp.material.opacity = dist < threshold ? Math.min(1, (threshold - dist) / (threshold - CFG.SPHERE_R * 1.6)) : 0;
-    // Face visibility: hide labels on back of globe
-    const zonePos = sp.position.clone().normalize();
-    const camDir  = camera.position.clone().normalize();
-    const dot = zonePos.dot(camDir);
-    if (dot < 0.1) sp.material.opacity = 0;
-  }
-
-  controls.update();
-  renderer.render(scene, camera);
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════════════
-
-async function init() {
-  setLoader(10, 'INITIALIZING SCENE...');
-  initScene();
-
-  setLoader(25, 'GENERATING STAR FIELD...');
-  buildStarField();
-
-  setLoader(40, 'LOADING WORLD DATA...');
-  let regionsData = {};
-  let godsJson = { gods: [] };
-  let stateJson = {};
-
-  try {
-    const [rRes, gRes, sRes] = await Promise.all([
-      fetch(CFG.API_BASE + '/api/regions'),
-      fetch(CFG.API_BASE + '/api/gods'),
-      fetch(CFG.API_BASE + '/api/state'),
-    ]);
-    regionsData = await rRes.json();
-    godsJson    = await gRes.json();
-    stateJson   = await sRes.json();
-  } catch(e) {
-    setLoader(45, 'SERVER OFFLINE — DEMO MODE');
-    // Use embedded minimal demo data
-    regionsData = DEMO_REGIONS;
-    godsJson = DEMO_GODS;
-    stateJson = DEMO_STATE;
-  }
-
-  setLoader(55, 'RENDERING PLANET SURFACE...');
-  const texture = buildPlanetTexture(regionsData);
-  buildPlanet(texture);
-
-  setLoader(65, 'PROJECTING TERRITORIES...');
-  initZones(regionsData);
-
-  setLoader(75, 'BUILDING ORBITAL RINGS...');
-  buildOrbitalRings();
-
-  setLoader(85, 'LOADING GOD REGISTRY...');
-  godsData = {};
-  for (const g of (godsJson.gods || [])) godsData[g.god_id] = g;
-  worldState = stateJson.zone_ownership || {};
-  worldState.__ancient_seals = stateJson.ancient_seals || {};
-  contestedList = stateJson.contested_borders || [];
-  prevOwnership = { ...worldState };
-
-  setLoader(95, 'SYNCHRONIZING TERRITORIES...');
-  updateZoneColors();
-  updateGodPanel();
-  updateTopStats();
-  updateContestedPills();
-
-  setLoader(100, 'AETHERMOOR ONLINE');
-  await new Promise(r => setTimeout(r, 600));
-  document.getElementById('loader').classList.add('hidden');
-
-  // Start polling
-  setInterval(fetchState, CFG.POLL_MS);
-
-  // Start render loop
-  animate();
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// DEMO DATA (fallback when server is offline)
-// ═══════════════════════════════════════════════════════════════════
-// Full Aethermoor data — used when server is offline (standalone mode)
-const DEMO_REGIONS = {"void_ridge":{"region_id":"void_ridge","region_name":"The Void Ridge","description":"The brutal northern wastes. Unclaimed and chaotic.","base_nature":"chaos","zones":[{"zone_id":"shattered_peak","zone_name":"The Shattered Peak","lore":"Where the sky splits and storms are born.","vertices":[[0,0],[660,0],[700,80],[640,220],[0,190]],"centroid":[400,98],"neighboring_zones":["ashen_wastes","elderwood_grove"],"ancient_seal":false,"base_nature":"void"},{"zone_id":"ashen_wastes","zone_name":"The Ashen Wastes","lore":"A dead plain blanketed in the ash of a forgotten war.","vertices":[[660,0],[1340,0],[1360,80],[1300,220],[640,220],[700,80]],"centroid":[1000,100],"neighboring_zones":["shattered_peak","dead_crown","iron_gate","elderwood_grove"],"ancient_seal":false,"base_nature":"chaos"},{"zone_id":"dead_crown","zone_name":"The Dead Crown","lore":"Ruins of a kingdom that tried to rule the Void.","vertices":[[1340,0],[2000,0],[2000,190],[1960,220],[1300,220],[1360,80]],"centroid":[1660,118],"neighboring_zones":["ashen_wastes","char_fields"],"ancient_seal":false,"base_nature":"void"}]},"verdant_reach":{"region_id":"verdant_reach","region_name":"The Verdant Reach","description":"Ancient forests. Nature gods thrive here.","base_nature":"nature","zones":[{"zone_id":"elderwood_grove","zone_name":"The Elderwood Grove","lore":"Trees older than the gods. They remember everything.","vertices":[[0,190],[640,220],[610,440],[15,415]],"centroid":[316,316],"neighboring_zones":["shattered_peak","ashen_wastes","thornwall","iron_gate"],"ancient_seal":false,"base_nature":"nature"},{"zone_id":"thornwall","zone_name":"The Thornwall","lore":"A living wall of razor thorns that grows overnight.","vertices":[[15,415],[610,440],[580,660],[10,635]],"centroid":[304,538],"neighboring_zones":["elderwood_grove","misty_highlands","iron_gate","anvil_plains"],"ancient_seal":false,"base_nature":"nature"},{"zone_id":"misty_highlands","zone_name":"The Misty Highlands","lore":"Fog so thick mortals forget their own names.","vertices":[[10,635],[580,660],[545,790],[0,770]],"centroid":[284,714],"neighboring_zones":["thornwall","bleached_path","warriors_rest","slum_district"],"ancient_seal":false,"base_nature":"arcane"}]},"iron_heartlands":{"region_id":"iron_heartlands","region_name":"The Iron Heartlands","description":"The central military zone. Where armies clash.","base_nature":"balanced","zones":[{"zone_id":"iron_gate","zone_name":"The Iron Gate","lore":"The great passage through the north. Every conqueror starts here.","vertices":[[640,220],[1300,220],[1315,395],[655,405]],"centroid":[978,310],"neighboring_zones":["ashen_wastes","elderwood_grove","thornwall","anvil_plains","char_fields"],"ancient_seal":false,"base_nature":"balanced"},{"zone_id":"anvil_plains","zone_name":"The Anvil Plains","lore":"Flat lands perfect for battle. The gods use it as a proving ground.","vertices":[[655,405],[1315,395],[1322,572],[652,582]],"centroid":[986,489],"neighboring_zones":["iron_gate","thornwall","warriors_rest"],"ancient_seal":false,"base_nature":"balanced"},{"zone_id":"warriors_rest","zone_name":"The Warrior's Rest","lore":"Where champions go after their last battle. Not all of them die.","vertices":[[652,582],[1322,572],[1312,705],[642,710]],"centroid":[982,642],"neighboring_zones":["anvil_plains","misty_highlands","slum_district","dragonfault","drowned_shore"],"ancient_seal":false,"base_nature":"balanced"}]},"ember_barrens":{"region_id":"ember_barrens","region_name":"The Ember Barrens","description":"Volcanic east. The soil itself is hot.","base_nature":"fire","zones":[{"zone_id":"char_fields","zone_name":"The Char Fields","lore":"Nothing grows here. The soil is pure carbon from ancient fires.","vertices":[[1300,220],[2000,190],[2000,435],[1332,448]],"centroid":[1658,323],"neighboring_zones":["dead_crown","ashen_wastes","iron_gate","cinder_pit"],"ancient_seal":false,"base_nature":"fire"},{"zone_id":"cinder_pit","zone_name":"The Cinder Pit","lore":"A great wound in the earth that never stops burning.","vertices":[[1332,448],[2000,435],[2000,648],[1358,662]],"centroid":[1673,548],"neighboring_zones":["char_fields","dragonfault"],"ancient_seal":false,"base_nature":"fire"},{"zone_id":"dragonfault","zone_name":"The Dragonfault","lore":"A rift where something massive once crashed through the earth.","vertices":[[1358,662],[2000,648],[2000,800],[1382,800]],"centroid":[1685,728],"neighboring_zones":["cinder_pit","warriors_rest","drowned_shore"],"ancient_seal":false,"base_nature":"fire"}]},"bone_marches":{"region_id":"bone_marches","region_name":"The Bone Marches","description":"Cursed western lowlands. Death follows you here.","base_nature":"darkness","zones":[{"zone_id":"bleached_path","zone_name":"The Bleached Path","lore":"A road paved with the bones of those who tried to flee.","vertices":[[0,770],[545,790],[518,958],[0,942]],"centroid":[266,865],"neighboring_zones":["misty_highlands","grave_hollow","slum_district"],"ancient_seal":false,"base_nature":"darkness"},{"zone_id":"grave_hollow","zone_name":"The Grave Hollow","lore":"A valley so silent even prayers don't echo here.","vertices":[[0,942],[518,958],[508,1098],[0,1080]],"centroid":[257,1020],"neighboring_zones":["bleached_path","widows_pass","merchant_quarter"],"ancient_seal":false,"base_nature":"darkness"},{"zone_id":"widows_pass","zone_name":"The Widow's Pass","lore":"Where the war widows built their own city. None are welcome.","vertices":[[0,1080],[508,1098],[490,1162],[0,1162]],"centroid":[250,1126],"neighboring_zones":["grave_hollow","high_citadel","gilded_road"],"ancient_seal":false,"base_nature":"darkness"}]},"crown_districts":{"region_id":"crown_districts","region_name":"The Crown Districts","description":"The center of the world. The most contested land in Aethermoor.","base_nature":"balanced","zones":[{"zone_id":"slum_district","zone_name":"The Slum District","lore":"Where Caleb was born, beaten, and thrown into the abyss to die. Where the God War truly began.","vertices":[[642,710],[1312,705],[1308,858],[648,868]],"centroid":[978,785],"neighboring_zones":["warriors_rest","misty_highlands","bleached_path","merchant_quarter","drowned_shore"],"ancient_seal":false,"base_nature":"balanced","is_origin":true},{"zone_id":"merchant_quarter","zone_name":"The Merchant Quarter","lore":"Gold changes hands here faster than prayers reach the gods.","vertices":[[648,868],[1308,858],[1298,1005],[652,1012]],"centroid":[977,936],"neighboring_zones":["slum_district","high_citadel","grave_hollow","drowned_shore"],"ancient_seal":false,"base_nature":"balanced"},{"zone_id":"high_citadel","zone_name":"The High Citadel","lore":"The throne of a dead king. Whoever controls this controls the world's memory.","vertices":[[652,1012],[1298,1005],[1288,1128],[658,1128]],"centroid":[974,1068],"neighboring_zones":["merchant_quarter","widows_pass","dusthaven","salt_flats"],"ancient_seal":false,"base_nature":"balanced"}]},"tidal_expanse":{"region_id":"tidal_expanse","region_name":"The Tidal Expanse","description":"The eastern coast. Calm on the surface. Deadly underneath.","base_nature":"void","zones":[{"zone_id":"drowned_shore","zone_name":"The Drowned Shore","lore":"A coast where ships go to die. The water here remembers every storm.","vertices":[[1382,800],[2000,800],[2000,965],[1405,975]],"centroid":[1697,885],"neighboring_zones":["dragonfault","warriors_rest","slum_district","merchant_quarter","salt_flats"],"ancient_seal":false,"base_nature":"void"},{"zone_id":"salt_flats","zone_name":"The Salt Flats","lore":"Endless white plains. Nothing rots here. Nothing heals either.","vertices":[[1405,975],[2000,965],[2000,1105],[1415,1112]],"centroid":[1705,1040],"neighboring_zones":["drowned_shore","high_citadel","deep_current"],"ancient_seal":false,"base_nature":"void"},{"zone_id":"deep_current","zone_name":"The Deep Current","lore":"An inland sea that drains to nowhere. The water flows down and never returns.","vertices":[[1415,1112],[2000,1105],[2000,1162],[1418,1162]],"centroid":[1708,1135],"neighboring_zones":["salt_flats","old_crossing"],"ancient_seal":false,"base_nature":"void"}]},"golden_reaches":{"region_id":"golden_reaches","region_name":"The Golden Reaches","description":"The southern trade roads. Wealth and rot in equal measure.","base_nature":"greed","zones":[{"zone_id":"gilded_road","zone_name":"The Gilded Road","lore":"The ancient trade road. Every stone is worth more than a peasant's life.","vertices":[[0,1162],[660,1162],[648,1298],[0,1298]],"centroid":[327,1230],"neighboring_zones":["widows_pass","dusthaven","seal_of_fear"],"ancient_seal":false,"base_nature":"greed"},{"zone_id":"dusthaven","zone_name":"The Dusthaven","lore":"A crossroads city built on debt. Everyone here owes someone something.","vertices":[[660,1162],[1382,1162],[1372,1298],[648,1298]],"centroid":[1016,1230],"neighboring_zones":["gilded_road","old_crossing","high_citadel","seal_of_balance"],"ancient_seal":false,"base_nature":"greed"},{"zone_id":"old_crossing","zone_name":"The Old Crossing","lore":"Where the first human bargained with a god. The deal is still unpaid.","vertices":[[1372,1162],[2000,1162],[2000,1298],[1372,1298]],"centroid":[1686,1230],"neighboring_zones":["dusthaven","deep_current","seal_of_greed"],"ancient_seal":false,"base_nature":"greed"}]},"sunken_archive":{"region_id":"sunken_archive","region_name":"The Sunken Archive","description":"WHERE THE ANCIENT GODS SLEEP. THESE ZONES CANNOT BE CLAIMED.","base_nature":"ancient","zones":[{"zone_id":"seal_of_fear","zone_name":"Seal of Fear","lore":"The God of Fear sleeps here. The ground breathes. Mortals who approach report hearing their own deaths.","vertices":[[0,1298],[648,1298],[638,1400],[0,1400]],"centroid":[322,1349],"neighboring_zones":["gilded_road","seal_of_balance"],"ancient_seal":true,"sealed_god":"god_of_fear","crack_level":0,"max_cracks":5,"base_nature":"fear"},{"zone_id":"seal_of_balance","zone_name":"Seal of Balance","lore":"The God of Balance was the first to wake. The seal here is cracked and weeping light from one side, darkness from the other.","vertices":[[648,1298],[1372,1298],[1362,1400],[638,1400]],"centroid":[1005,1349],"neighboring_zones":["seal_of_fear","seal_of_greed","dusthaven"],"ancient_seal":true,"sealed_god":"god_of_balance","crack_level":3,"max_cracks":5,"base_nature":"balanced"},{"zone_id":"seal_of_greed","zone_name":"Seal of Greed","lore":"The God of Greed sleeps on a mountain of offerings mortals left trying to bribe it back to sleep.","vertices":[[1362,1298],[2000,1298],[2000,1400],[1362,1400]],"centroid":[1681,1349],"neighboring_zones":["seal_of_balance","old_crossing"],"ancient_seal":true,"sealed_god":"god_of_greed","crack_level":1,"max_cracks":5,"base_nature":"greed"}]}};
-const DEMO_GODS    = {"_meta":{"version":"1.0","description":"Neural Fights - God Registry. Each entry is a God claiming territory in Aethermoor.","nature_elements":["balanced","fire","ice","darkness","nature","chaos","void","greed","fear","arcane","blood","time","gravity"]},"gods":[{"god_id":"caleb_01","god_name":"Caleb","nature":"Balance","nature_element":"balanced","follower_count":0,"color_primary":"#00d9ff","color_secondary":"#e94560","champion_character_id":null,"owned_zones":["slum_district"],"is_ancient":false,"is_player_god":false,"is_protagonist":true,"registered_at":"2026-02-24T00:00:00","source":"lore","api_source":null,"border_style":"balance","lore_description":"Born in the Slum District. Thrown into an abyss. Chose to stand back up. Champion of the God of Balance \u2014 but the cost of his power breeds chaos wherever he wins."}],"ancient_gods":[{"god_id":"ancient_balance","god_name":"The God of Balance","nature":"Balance","nature_element":"balanced","color_primary":"#00d9ff","color_secondary":"#e94560","seal_zone":"seal_of_balance","crack_level":3,"is_ancient":true,"status":"awakened","lore_description":"A corrupted Athena. First to wake. She does not speak \u2014 she tilts."},{"god_id":"ancient_fear","god_name":"The God of Fear","nature":"Fear","nature_element":"fear","color_primary":"#2d0040","color_secondary":"#7a00aa","seal_zone":"seal_of_fear","crack_level":0,"is_ancient":true,"status":"sleeping","lore_description":"Still asleep. But the nightmares have been getting louder."},{"god_id":"ancient_greed","god_name":"The God of Greed","nature":"Greed","nature_element":"greed","color_primary":"#b8860b","color_secondary":"#ffd700","seal_zone":"seal_of_greed","crack_level":1,"is_ancient":true,"status":"stirring","lore_description":"One eye has opened. It immediately looked at what others owned."}]};
-const DEMO_STATE   = {"_meta":{"description":"Live snapshot of territory ownership. Updated by WorldStateSync whenever characters or gods change.","last_updated":"2026-02-24T00:00:00"},"zone_ownership":{"shattered_peak":null,"ashen_wastes":null,"dead_crown":null,"elderwood_grove":null,"thornwall":null,"misty_highlands":null,"iron_gate":null,"anvil_plains":null,"warriors_rest":null,"char_fields":null,"cinder_pit":null,"dragonfault":null,"bleached_path":null,"grave_hollow":null,"widows_pass":null,"slum_district":"caleb_01","merchant_quarter":null,"high_citadel":null,"drowned_shore":null,"salt_flats":null,"deep_current":null,"gilded_road":null,"dusthaven":null,"old_crossing":null,"seal_of_fear":null,"seal_of_balance":null,"seal_of_greed":null},"contested_borders":[],"ancient_seals":{"seal_of_balance":{"crack_level":3,"max_cracks":5,"status":"awakened"},"seal_of_fear":{"crack_level":0,"max_cracks":5,"status":"sleeping"},"seal_of_greed":{"crack_level":1,"max_cracks":5,"status":"stirring"}},"global_stats":{"total_gods":1,"total_followers":0,"zones_claimed":1,"zones_contested":0,"war_intensity":0.0}};
-
-// ── GO ────────────────────────────────────────────────────────────
+const DEMO_REGIONS={"void_ridge":{"region_id":"void_ridge","region_name":"The Void Ridge","base_nature":"chaos","zones":[{"zone_id":"shattered_peak","zone_name":"The Shattered Peak","lore":"Where the sky splits and storms are born.","vertices":[[0,0],[660,0],[700,80],[640,220],[0,190]],"centroid":[400,98],"neighboring_zones":["ashen_wastes","elderwood_grove"],"ancient_seal":false,"base_nature":"void"},{"zone_id":"ashen_wastes","zone_name":"The Ashen Wastes","lore":"A dead plain blanketed in ash.","vertices":[[660,0],[1340,0],[1360,80],[1300,220],[640,220],[700,80]],"centroid":[1000,100],"neighboring_zones":["shattered_peak","dead_crown","iron_gate"],"ancient_seal":false,"base_nature":"chaos"},{"zone_id":"dead_crown","zone_name":"The Dead Crown","lore":"Ruins of a kingdom that tried to rule the Void.","vertices":[[1340,0],[2000,0],[2000,190],[1960,220],[1300,220],[1360,80]],"centroid":[1660,118],"neighboring_zones":["ashen_wastes","char_fields"],"ancient_seal":false,"base_nature":"void"}]},"verdant_reach":{"region_id":"verdant_reach","region_name":"The Verdant Reach","base_nature":"nature","zones":[{"zone_id":"elderwood_grove","zone_name":"The Elderwood Grove","lore":"Trees older than the gods.","vertices":[[0,190],[640,220],[610,440],[15,415]],"centroid":[316,316],"neighboring_zones":["shattered_peak","thornwall","iron_gate"],"ancient_seal":false,"base_nature":"nature"},{"zone_id":"thornwall","zone_name":"The Thornwall","lore":"A living wall of razor thorns.","vertices":[[15,415],[610,440],[580,660],[10,635]],"centroid":[304,538],"neighboring_zones":["elderwood_grove","misty_highlands","anvil_plains"],"ancient_seal":false,"base_nature":"nature"},{"zone_id":"misty_highlands","zone_name":"The Misty Highlands","lore":"Fog so thick mortals forget their names.","vertices":[[10,635],[580,660],[545,790],[0,770]],"centroid":[284,714],"neighboring_zones":["thornwall","bleached_path","slum_district"],"ancient_seal":false,"base_nature":"arcane"}]},"iron_heartlands":{"region_id":"iron_heartlands","region_name":"The Iron Heartlands","base_nature":"balanced","zones":[{"zone_id":"iron_gate","zone_name":"The Iron Gate","lore":"The great passage through the north.","vertices":[[640,220],[1300,220],[1315,395],[655,405]],"centroid":[978,310],"neighboring_zones":["ashen_wastes","elderwood_grove","anvil_plains","char_fields"],"ancient_seal":false,"base_nature":"balanced"},{"zone_id":"anvil_plains","zone_name":"The Anvil Plains","lore":"Flat lands perfect for battle.","vertices":[[655,405],[1315,395],[1322,572],[652,582]],"centroid":[986,489],"neighboring_zones":["iron_gate","thornwall","warriors_rest"],"ancient_seal":false,"base_nature":"balanced"},{"zone_id":"warriors_rest","zone_name":"The Warrior's Rest","lore":"Where champions go after their last battle.","vertices":[[652,582],[1322,572],[1312,705],[642,710]],"centroid":[982,642],"neighboring_zones":["anvil_plains","slum_district","dragonfault"],"ancient_seal":false,"base_nature":"balanced"}]},"ember_barrens":{"region_id":"ember_barrens","region_name":"The Ember Barrens","base_nature":"fire","zones":[{"zone_id":"char_fields","zone_name":"The Char Fields","lore":"Nothing grows here.","vertices":[[1300,220],[2000,190],[2000,435],[1332,448]],"centroid":[1658,323],"neighboring_zones":["dead_crown","iron_gate","cinder_pit"],"ancient_seal":false,"base_nature":"fire"},{"zone_id":"cinder_pit","zone_name":"The Cinder Pit","lore":"A wound that never stops burning.","vertices":[[1332,448],[2000,435],[2000,648],[1358,662]],"centroid":[1673,548],"neighboring_zones":["char_fields","dragonfault"],"ancient_seal":false,"base_nature":"fire"},{"zone_id":"dragonfault","zone_name":"The Dragonfault","lore":"A rift where something massive crashed.","vertices":[[1358,662],[2000,648],[2000,800],[1382,800]],"centroid":[1685,728],"neighboring_zones":["cinder_pit","warriors_rest","drowned_shore"],"ancient_seal":false,"base_nature":"fire"}]},"bone_marches":{"region_id":"bone_marches","region_name":"The Bone Marches","base_nature":"darkness","zones":[{"zone_id":"bleached_path","zone_name":"The Bleached Path","lore":"A road paved with bones.","vertices":[[0,770],[545,790],[518,958],[0,942]],"centroid":[266,865],"neighboring_zones":["misty_highlands","grave_hollow"],"ancient_seal":false,"base_nature":"darkness"},{"zone_id":"grave_hollow","zone_name":"The Grave Hollow","lore":"A valley so silent prayers don't echo.","vertices":[[0,942],[518,958],[508,1098],[0,1080]],"centroid":[257,1020],"neighboring_zones":["bleached_path","widows_pass","merchant_quarter"],"ancient_seal":false,"base_nature":"darkness"},{"zone_id":"widows_pass","zone_name":"The Widow's Pass","lore":"Where war widows built their own city.","vertices":[[0,1080],[508,1098],[490,1162],[0,1162]],"centroid":[250,1126],"neighboring_zones":["grave_hollow","high_citadel","gilded_road"],"ancient_seal":false,"base_nature":"darkness"}]},"crown_districts":{"region_id":"crown_districts","region_name":"The Crown Districts","base_nature":"balanced","zones":[{"zone_id":"slum_district","zone_name":"The Slum District","lore":"Where Caleb was born. Where the God War began.","vertices":[[642,710],[1312,705],[1308,858],[648,868]],"centroid":[978,785],"neighboring_zones":["warriors_rest","misty_highlands","bleached_path","merchant_quarter"],"ancient_seal":false,"base_nature":"balanced","is_origin":true},{"zone_id":"merchant_quarter","zone_name":"The Merchant Quarter","lore":"Gold changes hands faster than prayers.","vertices":[[648,868],[1308,858],[1298,1005],[652,1012]],"centroid":[977,936],"neighboring_zones":["slum_district","high_citadel","grave_hollow"],"ancient_seal":false,"base_nature":"balanced"},{"zone_id":"high_citadel","zone_name":"The High Citadel","lore":"The throne of a dead king.","vertices":[[652,1012],[1298,1005],[1288,1128],[658,1128]],"centroid":[974,1068],"neighboring_zones":["merchant_quarter","widows_pass","dusthaven"],"ancient_seal":false,"base_nature":"balanced"}]},"tidal_expanse":{"region_id":"tidal_expanse","region_name":"The Tidal Expanse","base_nature":"void","zones":[{"zone_id":"drowned_shore","zone_name":"The Drowned Shore","lore":"A coast where ships go to die.","vertices":[[1382,800],[2000,800],[2000,965],[1405,975]],"centroid":[1697,885],"neighboring_zones":["dragonfault","warriors_rest","salt_flats"],"ancient_seal":false,"base_nature":"void"},{"zone_id":"salt_flats","zone_name":"The Salt Flats","lore":"Nothing rots here. Nothing heals either.","vertices":[[1405,975],[2000,965],[2000,1105],[1415,1112]],"centroid":[1705,1040],"neighboring_zones":["drowned_shore","high_citadel","deep_current"],"ancient_seal":false,"base_nature":"void"},{"zone_id":"deep_current","zone_name":"The Deep Current","lore":"The water flows down and never returns.","vertices":[[1415,1112],[2000,1105],[2000,1162],[1418,1162]],"centroid":[1708,1135],"neighboring_zones":["salt_flats","old_crossing"],"ancient_seal":false,"base_nature":"void"}]},"golden_reaches":{"region_id":"golden_reaches","region_name":"The Golden Reaches","base_nature":"greed","zones":[{"zone_id":"gilded_road","zone_name":"The Gilded Road","lore":"Every stone worth more than a peasant's life.","vertices":[[0,1162],[660,1162],[648,1298],[0,1298]],"centroid":[327,1230],"neighboring_zones":["widows_pass","dusthaven","seal_of_fear"],"ancient_seal":false,"base_nature":"greed"},{"zone_id":"dusthaven","zone_name":"The Dusthaven","lore":"A crossroads city built on debt.","vertices":[[660,1162],[1382,1162],[1372,1298],[648,1298]],"centroid":[1016,1230],"neighboring_zones":["gilded_road","old_crossing","high_citadel"],"ancient_seal":false,"base_nature":"greed"},{"zone_id":"old_crossing","zone_name":"The Old Crossing","lore":"Where the first human bargained with a god.","vertices":[[1372,1162],[2000,1162],[2000,1298],[1372,1298]],"centroid":[1686,1230],"neighboring_zones":["dusthaven","deep_current","seal_of_greed"],"ancient_seal":false,"base_nature":"greed"}]},"sunken_archive":{"region_id":"sunken_archive","region_name":"The Sunken Archive","base_nature":"ancient","zones":[{"zone_id":"seal_of_fear","zone_name":"Seal of Fear","lore":"The God of Fear sleeps here.","vertices":[[0,1298],[648,1298],[638,1400],[0,1400]],"centroid":[322,1349],"neighboring_zones":["gilded_road","seal_of_balance"],"ancient_seal":true,"sealed_god":"god_of_fear","crack_level":0,"max_cracks":5,"base_nature":"fear"},{"zone_id":"seal_of_balance","zone_name":"Seal of Balance","lore":"The first to wake. The seal weeps light and darkness.","vertices":[[648,1298],[1372,1298],[1362,1400],[638,1400]],"centroid":[1005,1349],"neighboring_zones":["seal_of_fear","seal_of_greed","dusthaven"],"ancient_seal":true,"sealed_god":"god_of_balance","crack_level":3,"max_cracks":5,"base_nature":"balanced"},{"zone_id":"seal_of_greed","zone_name":"Seal of Greed","lore":"One eye has opened. It looked at what others owned.","vertices":[[1362,1298],[2000,1298],[2000,1400],[1362,1400]],"centroid":[1681,1349],"neighboring_zones":["seal_of_balance","old_crossing"],"ancient_seal":true,"sealed_god":"god_of_greed","crack_level":1,"max_cracks":5,"base_nature":"greed"}]}};
+const DEMO_GODS={"gods":[{"god_id":"caleb_01","god_name":"Caleb","nature":"Balance","nature_element":"balanced","follower_count":0,"color_primary":"#00d9ff","color_secondary":"#e94560","owned_zones":["slum_district"],"is_ancient":false,"is_protagonist":true,"source":"lore","border_style":"balance","lore_description":"Born in the Slum District. Threw into an abyss. Chose to stand back up."}]};
+const DEMO_STATE={"zone_ownership":{"shattered_peak":null,"ashen_wastes":null,"dead_crown":null,"elderwood_grove":null,"thornwall":null,"misty_highlands":null,"iron_gate":null,"anvil_plains":null,"warriors_rest":null,"char_fields":null,"cinder_pit":null,"dragonfault":null,"bleached_path":null,"grave_hollow":null,"widows_pass":null,"slum_district":"caleb_01","merchant_quarter":null,"high_citadel":null,"drowned_shore":null,"salt_flats":null,"deep_current":null,"gilded_road":null,"dusthaven":null,"old_crossing":null,"seal_of_fear":null,"seal_of_balance":null,"seal_of_greed":null},"contested_borders":[],"ancient_seals":{"seal_of_balance":{"crack_level":3,"max_cracks":5,"status":"awakened"},"seal_of_fear":{"crack_level":0,"max_cracks":5,"status":"sleeping"},"seal_of_greed":{"crack_level":1,"max_cracks":5,"status":"stirring"}}};
 init();
 </script>
 </body>

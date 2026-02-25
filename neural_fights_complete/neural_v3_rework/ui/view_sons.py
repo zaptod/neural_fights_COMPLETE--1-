@@ -221,13 +221,15 @@ class TelaSons(tk.Frame):
         
         row = 0
         col = 0
+        NUM_COLS = 2  # 2 sliders per row — easier to read and stays responsive
         for cat_id, (cat_name, default_vol) in volume_categories.items():
             # Obtém volume salvo ou usa padrão
             current_vol = int(saved_volumes.get(cat_id, default_vol / 100.0) * 100)
             
-            # Container do slider
+            # Container do slider — expande horizontalmente
             slider_container = tk.Frame(inner_frame, bg=COR_CARD)
-            slider_container.grid(row=row, column=col, padx=10, pady=5, sticky="ew")
+            slider_container.grid(row=row, column=col, padx=8, pady=5, sticky="ew")
+            slider_container.grid_columnconfigure(1, weight=1)
             
             # Label do nome
             tk.Label(
@@ -238,13 +240,13 @@ class TelaSons(tk.Frame):
             # Variável do slider
             vol_var = tk.IntVar(value=current_vol)
             
-            # Slider
+            # Slider — fills available space
             slider = ttk.Scale(
                 slider_container, from_=0, to=100, 
-                variable=vol_var, orient="horizontal", length=120,
+                variable=vol_var, orient="horizontal",
                 command=lambda v, cid=cat_id: self._on_volume_change(cid, v)
             )
-            slider.pack(side="left", padx=5)
+            slider.pack(side="left", padx=5, fill="x", expand=True)
             
             # Label de valor
             val_label = tk.Label(
@@ -260,12 +262,12 @@ class TelaSons(tk.Frame):
             }
             
             col += 1
-            if col >= 4:  # 4 sliders por linha
+            if col >= NUM_COLS:
                 col = 0
                 row += 1
         
         # Configura grid
-        for i in range(4):
+        for i in range(NUM_COLS):
             inner_frame.grid_columnconfigure(i, weight=1)
     
     def _on_volume_change(self, category: str, value):
@@ -352,7 +354,13 @@ class TelaSons(tk.Frame):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
         
-        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        _win_id = canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+
+        def _sync_width(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            canvas.itemconfig(_win_id, width=event.width)
+
+        canvas.bind("<Configure>", _sync_width)
         canvas.configure(yscrollcommand=scrollbar.set)
         
         # Bind mouse wheel

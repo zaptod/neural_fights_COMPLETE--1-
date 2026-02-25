@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.characters import Personagem
 from models.weapons import Arma
 from data.database import carregar_armas, carregar_personagens, carregar_arma_por_nome
+from data.app_state import AppState
 
 
 class TournamentState(Enum):
@@ -88,7 +89,7 @@ class Tournament:
     def load_participants_from_database(self, max_participants: int = 64) -> int:
         """Carrega participantes do banco de dados"""
         try:
-            personagens = carregar_personagens()
+            personagens = AppState.get().characters
             
             if not personagens:
                 print("❌ Nenhum personagem encontrado no banco de dados!")
@@ -281,6 +282,14 @@ class Tournament:
         
         if "KO" in ko_type:
             self.stats["total_kos"] += 1
+
+        # Propagate result to AppState (centralizes session stats + fires tournament_changed)
+        AppState.get().record_fight_result(
+            winner=match.winner_name,
+            loser=match.loser_name,
+            duration=duration,
+            ko=("KO" in ko_type),
+        )
         
         # Atualiza próxima rodada
         self._advance_winner(match)
@@ -419,30 +428,39 @@ class Tournament:
             state["bracket"].append(round_data)
         
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        filepath = os.path.join(base_dir, "data", filename)
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump(state, f, indent=2, ensure_ascii=False)
-        
-        print(f"✅ Estado salvo em {filepath}")
+        # Note: 'filename' is kept for API compatibility, but AppState always writes to
+        # the canonical tournament_state.json path.  The 'base_dir' var is retained for
+        # any future direct-path needs but the write below is handled by AppState.
+        _ = os.path.join(base_dir, "data", filename)  # kept for compatibility, unused
+
+        AppState.get().set_tournament_state(state)
+        print(f"✅ Estado do torneio salvo via AppState")
     
     def load_state(self, filename: str = "tournament_state.json") -> bool:
-        """Carrega estado do torneio"""
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        filepath = os.path.join(base_dir, "data", filename)
-        
+        """Carrega estado do torneio via AppState (single source of truth)."""
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
-                state = json.load(f)
-            
-            self.name = state["name"]
-            self.participants = state["participants"]
-            self.state = TournamentState(state["state"])
-            self.champion = state["champion"]
-            self.current_round = state["current_round"]
-            self.current_match = state["current_match"]
-            self.stats = state.get("stats", self.stats)
-            
+            state = AppState.get().tournament_state  # already loaded from disk by AppState
+
+            # If AppState has no meaningful tournament data yet, fall back to disk
+            if not state.get("bracket") and not state.get("participants"):
+                # Fallback: read from disk and push into AppState
+                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                filepath = os.path.join(base_dir, "data", filename)
+                if not os.path.exists(filepath):
+                    print(f"⚠️ Arquivo não encontrado: {filepath}")
+                    return False
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    state = json.load(f)
+                AppState.get().set_tournament_state(state)
+
+            self.name           = state["name"]
+            self.participants   = state["participants"]
+            self.state          = TournamentState(state["state"])
+            self.champion       = state["champion"]
+            self.current_round  = state["current_round"]
+            self.current_match  = state["current_match"]
+            self.stats          = state.get("stats", self.stats)
+
             self.bracket = []
             for round_data in state["bracket"]:
                 round_obj = TournamentRound(
@@ -464,13 +482,10 @@ class Tournament:
                     )
                     round_obj.matches.append(match)
                 self.bracket.append(round_obj)
-            
-            print(f"✅ Estado carregado de {filepath}")
+
+            print("✅ Estado do torneio carregado via AppState")
             return True
-            
-        except FileNotFoundError:
-            print(f"⚠️ Arquivo não encontrado: {filepath}")
-            return False
+
         except Exception as e:
             print(f"❌ Erro ao carregar estado: {e}")
             return False
@@ -487,24 +502,15 @@ class TournamentRunner:
         }
     
     def setup_match_config(self, fighter1_name: str, fighter2_name: str, cenario: str = "Arena"):
-        """Configura o match_config.json para a próxima luta"""
-        import json
-        import os
-        
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        config_path = os.path.join(base_dir, "match_config.json")
-        
+        """Configura o match_config para a próxima luta via AppState"""
         config = {
             "p1_nome": fighter1_name,
             "p2_nome": fighter2_name,
             "cenario": cenario,
             "portrait_mode": False
         }
-        
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=4, ensure_ascii=False)
-        
-        return config_path
+        AppState.get().set_match_config(config)
+        return AppState.get().match_config  # return config dict for compatibility
     
     def launch_simulation(self):
         """Lança o simulador Pygame"""

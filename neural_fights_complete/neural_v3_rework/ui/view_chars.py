@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import Personagem, LISTA_CLASSES, CLASSES_DATA, get_class_data
 from data import carregar_personagens, salvar_lista_chars, carregar_armas, database
+from data.app_state import AppState
 from ui.theme import (
     COR_BG, COR_BG_SECUNDARIO, COR_HEADER, COR_ACCENT, COR_SUCCESS, 
     COR_TEXTO, COR_TEXTO_DIM, COR_WARNING, COR_DANGER, CORES_CLASSE, CATEGORIAS_CLASSE
@@ -48,28 +49,37 @@ class TelaPersonagens(tk.Frame):
         
         self.setup_ui()
 
+        # Subscribe: refresh weapon dropdown when weapons change
+        AppState.get().subscribe("weapons_changed", self._on_weapons_changed)
+
+    def _on_weapons_changed(self, _data=None):
+        if hasattr(self, "atualizar_dados"):
+            self.atualizar_dados()
+
     def setup_ui(self):
         """Configura a interface principal"""
         # Header
         self.criar_header()
         
-        # Container principal dividido em 3 partes
+        # Container principal dividido em 3 partes — grid responsivo
         main = tk.Frame(self, bg=COR_BG)
         main.pack(fill="both", expand=True, padx=10, pady=5)
-        
+        main.grid_columnconfigure(0, weight=3, minsize=300)  # wizard
+        main.grid_columnconfigure(1, weight=4, minsize=200)  # centro/preview
+        main.grid_columnconfigure(2, weight=2, minsize=210)  # lista
+        main.grid_rowconfigure(0, weight=1)
+
         # Esquerda: Wizard Steps
-        self.frame_wizard = tk.Frame(main, bg=COR_BG_SECUNDARIO, width=420)
-        self.frame_wizard.pack(side="left", fill="y", padx=(0, 10))
-        self.frame_wizard.pack_propagate(False)
-        
+        self.frame_wizard = tk.Frame(main, bg=COR_BG_SECUNDARIO)
+        self.frame_wizard.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+
         # Centro: Preview e controles
         self.frame_centro = tk.Frame(main, bg=COR_BG)
-        self.frame_centro.pack(side="left", fill="both", expand=True, padx=(0, 10))
-        
+        self.frame_centro.grid(row=0, column=1, sticky="nsew", padx=5)
+
         # Direita: Lista de personagens
-        self.frame_lista = tk.Frame(main, bg=COR_BG_SECUNDARIO, width=280)
-        self.frame_lista.pack(side="right", fill="y")
-        self.frame_lista.pack_propagate(False)
+        self.frame_lista = tk.Frame(main, bg=COR_BG_SECUNDARIO)
+        self.frame_lista.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
         
         # Configura cada seção
         self.setup_wizard()
@@ -136,9 +146,10 @@ class TelaPersonagens(tk.Frame):
         self.lbl_passo_desc = tk.Label(
             self.frame_wizard, text="", 
             font=("Arial", 10), bg=COR_BG_SECUNDARIO, fg=COR_TEXTO_DIM,
-            wraplength=400
+            wraplength=300
         )
         self.lbl_passo_desc.pack(pady=(0, 15))
+        self.frame_wizard.bind("<Configure>", self._on_wizard_resize)
         
         # Container para conteúdo do passo (com scroll)
         self.frame_conteudo_container = tk.Frame(self.frame_wizard, bg=COR_BG_SECUNDARIO)
@@ -205,6 +216,12 @@ class TelaPersonagens(tk.Frame):
         )
         self.btn_proximo.pack(side="right")
 
+    def _on_wizard_resize(self, event=None):
+        """Adjust wraplength of description label to match wizard width."""
+        w = self.frame_wizard.winfo_width()
+        if w > 40:
+            self.lbl_passo_desc.config(wraplength=max(w - 40, 100))
+
     def setup_preview(self):
         """Configura o preview do personagem"""
         # Título
@@ -213,13 +230,12 @@ class TelaPersonagens(tk.Frame):
             font=("Arial", 12, "bold"), bg=COR_BG, fg=COR_TEXTO
         ).pack(pady=(10, 5))
         
-        # Canvas do preview
+        # Canvas do preview — expande com a janela
         self.canvas_preview = tk.Canvas(
             self.frame_centro, bg=COR_BG_SECUNDARIO, 
-            highlightthickness=2, highlightbackground=COR_ACCENT,
-            width=300, height=300
+            highlightthickness=2, highlightbackground=COR_ACCENT
         )
-        self.canvas_preview.pack(pady=10)
+        self.canvas_preview.pack(fill="both", expand=True, pady=10)
         
         # Resumo dos stats
         self.frame_stats = tk.Frame(self.frame_centro, bg=COR_BG_SECUNDARIO)
@@ -847,7 +863,7 @@ class TelaPersonagens(tk.Frame):
             slider = tk.Scale(
                 frame_rgb, from_=0, to=255, orient="horizontal", variable=var,
                 bg=COR_BG_SECUNDARIO, fg=COR_TEXTO, highlightthickness=0,
-                troughcolor=COR_BG, activebackground=COR_ACCENT, length=250,
+                troughcolor=COR_BG, activebackground=COR_ACCENT,
                 command=self._on_cor_change
             )
             slider.pack(side="left", padx=5)
@@ -1542,14 +1558,13 @@ class TelaPersonagens(tk.Frame):
                 self.dados_char.get("god_id"),  # [PHASE 3]
             )
             
+            _state = AppState.get()
             if self.indice_em_edicao is None:
-                self.controller.lista_personagens.append(p)
+                _state.add_character(p)
                 msg = f"Campeão '{nome}' criado com sucesso!"
             else:
-                self.controller.lista_personagens[self.indice_em_edicao] = p
+                _state.update_character(self.indice_em_edicao, p)
                 msg = f"Campeão '{nome}' atualizado!"
-            
-            salvar_lista_chars(self.controller.lista_personagens)
             self.atualizar_dados()
             self.novo_personagem()
             messagebox.showinfo("Sucesso", msg)
@@ -1568,8 +1583,7 @@ class TelaPersonagens(tk.Frame):
         nome = self.controller.lista_personagens[idx].nome
         
         if messagebox.askyesno("Confirmar", f"Deletar o campeão '{nome}'?\n\nEsta ação não pode ser desfeita!"):
-            del self.controller.lista_personagens[idx]
-            salvar_lista_chars(self.controller.lista_personagens)
+            AppState.get().delete_character(idx)
             self.atualizar_dados()
             self.novo_personagem()
 

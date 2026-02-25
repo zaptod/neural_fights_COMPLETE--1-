@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from tournament.tournament_mode import Tournament, TournamentRunner, TournamentState
+from data.app_state import AppState
 
 
 class MatchCard(ctk.CTkFrame):
@@ -77,6 +78,10 @@ class TournamentWindow(ctk.CTkToplevel):
         
         self.build_ui()
         self.load_participants()
+
+        # PATCH 4 — subscribe so bracket auto-refreshes when AppState fires tournament_changed
+        AppState.get().subscribe("tournament_changed", self._on_tournament_changed)
+        self.bind("<Destroy>", lambda _: AppState.get().unsubscribe("tournament_changed", self._on_tournament_changed))
     
     def build_ui(self):
         """Constrói a interface"""
@@ -192,6 +197,13 @@ class TournamentWindow(ctk.CTkToplevel):
             self.tournament.start_tournament()
             self.refresh_bracket()
     
+    def _on_tournament_changed(self, _data=None):
+        """Called by AppState whenever tournament_changed fires. Keeps the bracket in sync."""
+        try:
+            self.refresh_bracket()
+        except Exception:
+            pass  # Window may have been destroyed
+
     def refresh_bracket(self):
         """Atualiza visualização do bracket"""
         # Limpa

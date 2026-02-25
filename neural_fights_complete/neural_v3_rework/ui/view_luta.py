@@ -10,6 +10,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from simulation import simulacao
+from data.app_state import AppState
 from ui.theme import (
     COR_BG, COR_BG_SECUNDARIO, COR_HEADER, COR_ACCENT, COR_SUCCESS,
     COR_TEXTO, COR_TEXTO_DIM, COR_WARNING, COR_P1, COR_P2, CORES_CLASSE
@@ -28,6 +29,14 @@ class TelaLuta(tk.Frame):
         self.personagem_p2 = None
         
         self.setup_ui()
+
+        # Subscribe: refresh fighter list when chars or weapons change
+        AppState.get().subscribe("characters_changed", self._on_data_changed)
+        AppState.get().subscribe("weapons_changed",    self._on_data_changed)
+
+    def _on_data_changed(self, _data=None):
+        if hasattr(self, "atualizar_dados"):
+            self.atualizar_dados()
 
     def setup_ui(self):
         """Configura a interface"""
@@ -80,9 +89,9 @@ class TelaLuta(tk.Frame):
         tk.Label(frame_p1, text="PLAYER 1", font=("Impact", 20), 
                  bg=COR_P1, fg=COR_TEXTO).pack(fill="x", pady=5)
         
-        # Preview P1
-        self.canvas_p1 = tk.Canvas(frame_p1, width=200, height=200, bg=COR_BG, highlightthickness=0)
-        self.canvas_p1.pack(pady=10)
+        # Preview P1 — tamanho mínimo fixo; cresce se a janela for maior
+        self.canvas_p1 = tk.Canvas(frame_p1, width=160, height=160, bg=COR_BG, highlightthickness=0)
+        self.canvas_p1.pack(pady=5, fill="x", padx=10)
         
         self.lbl_nome_p1 = tk.Label(frame_p1, text="—", font=("Arial", 12, "bold"),
                                      bg=COR_BG_SECUNDARIO, fg=COR_TEXTO)
@@ -113,9 +122,10 @@ class TelaLuta(tk.Frame):
         
         self.listbox_p1.bind("<<ListboxSelect>>", lambda e: self._on_select_p1())
 
-        # === VS CENTRAL ===
-        frame_vs = tk.Frame(main, bg=COR_BG, width=180)
-        frame_vs.grid(row=0, column=1, sticky="ns", padx=10)
+        # === VS CENTRAL — sem width fixo, usa minsize pelo grid ===
+        frame_vs = tk.Frame(main, bg=COR_BG)
+        frame_vs.grid(row=0, column=1, sticky="ns", padx=5)
+        main.grid_columnconfigure(1, weight=0, minsize=160)
         
         tk.Label(frame_vs, text="", bg=COR_BG).pack(expand=True)  # Espaçador
         tk.Label(frame_vs, text="VS", font=("Impact", 50), bg=COR_BG, fg=COR_ACCENT).pack()
@@ -181,9 +191,9 @@ class TelaLuta(tk.Frame):
         tk.Label(frame_p2, text="PLAYER 2", font=("Impact", 20), 
                  bg=COR_P2, fg=COR_TEXTO).pack(fill="x", pady=5)
         
-        # Preview P2
-        self.canvas_p2 = tk.Canvas(frame_p2, width=200, height=200, bg=COR_BG, highlightthickness=0)
-        self.canvas_p2.pack(pady=10)
+        # Preview P2 — tamanho mínimo fixo; cresce se a janela for maior
+        self.canvas_p2 = tk.Canvas(frame_p2, width=160, height=160, bg=COR_BG, highlightthickness=0)
+        self.canvas_p2.pack(pady=5, fill="x", padx=10)
         
         self.lbl_nome_p2 = tk.Label(frame_p2, text="—", font=("Arial", 12, "bold"),
                                      bg=COR_BG_SECUNDARIO, fg=COR_TEXTO)
@@ -347,10 +357,9 @@ class TelaLuta(tk.Frame):
         }
         
         try:
-            with open("match_config.json", "w", encoding="utf-8") as f:
-                json.dump(match_data, f, indent=4, ensure_ascii=False)
+            AppState.get().set_match_config(match_data)
         except Exception as e:
-            messagebox.showerror("Erro", f"Falha ao salvar: {e}")
+            messagebox.showerror("Erro", f"Falha ao salvar config: {e}")
             return
         
         self.controller.withdraw()
@@ -381,8 +390,9 @@ class SeletorMapa(tk.Toplevel):
         
         self.title("🗺️ Selecionar Mapa")
         self.geometry("900x650")
+        self.minsize(640, 480)
         self.configure(bg=COR_BG)
-        self.resizable(False, False)
+        self.resizable(True, True)
         
         # Centraliza
         self.transient(parent)
@@ -411,14 +421,16 @@ class SeletorMapa(tk.Toplevel):
             font=("Arial", 16, "bold"), bg=COR_HEADER, fg=COR_TEXTO
         ).pack(pady=12)
         
-        # Container principal
+        # Container principal — grid com pesos
         main = tk.Frame(self, bg=COR_BG)
         main.pack(fill="both", expand=True, padx=15, pady=10)
-        
+        main.grid_columnconfigure(0, weight=1, minsize=220)
+        main.grid_columnconfigure(1, weight=3)
+        main.grid_rowconfigure(0, weight=1)
+
         # === LISTA DE MAPAS (esquerda) ===
-        frame_lista = tk.Frame(main, bg=COR_BG_SECUNDARIO, width=280)
-        frame_lista.pack(side="left", fill="y", padx=(0, 10))
-        frame_lista.pack_propagate(False)
+        frame_lista = tk.Frame(main, bg=COR_BG_SECUNDARIO)
+        frame_lista.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         
         tk.Label(
             frame_lista, text="MAPAS DISPONÍVEIS",
@@ -464,7 +476,9 @@ class SeletorMapa(tk.Toplevel):
         
         # === PREVIEW DO MAPA (direita) ===
         frame_preview = tk.Frame(main, bg=COR_BG_SECUNDARIO)
-        frame_preview.pack(side="right", fill="both", expand=True)
+        frame_preview.grid(row=0, column=1, sticky="nsew")
+        frame_preview.grid_rowconfigure(2, weight=1)  # canvas row expands
+        frame_preview.grid_columnconfigure(0, weight=1)
         
         # Nome do mapa
         self.lbl_nome_mapa = tk.Label(
@@ -473,12 +487,13 @@ class SeletorMapa(tk.Toplevel):
         )
         self.lbl_nome_mapa.pack(pady=(15, 5))
         
-        # Canvas para preview visual
+        # Canvas para preview visual — responsivo
         self.canvas_preview = tk.Canvas(
-            frame_preview, width=400, height=300,
+            frame_preview,
             bg=COR_BG, highlightthickness=2, highlightcolor=COR_ACCENT
         )
-        self.canvas_preview.pack(pady=10)
+        self.canvas_preview.pack(fill="both", expand=True, padx=10, pady=5)
+        self.canvas_preview.bind("<Configure>", lambda e: self._redraw_map_preview())
         
         # Info do mapa
         self.lbl_descricao = tk.Label(
@@ -547,13 +562,20 @@ class SeletorMapa(tk.Toplevel):
         # Desenha preview
         self._desenhar_preview(config)
     
+    def _redraw_map_preview(self):
+        """Called on canvas resize — redraws with current mapa_selecionado."""
+        config = self.ARENAS.get(self.mapa_selecionado)
+        if config:
+            self._desenhar_preview(config)
+
     def _desenhar_preview(self, config):
         """Desenha preview visual do mapa"""
         canvas = self.canvas_preview
         canvas.delete("all")
         
-        # Dimensões do canvas
-        cw, ch = 400, 300
+        # Dimensões reais do canvas (responsivo)
+        cw = canvas.winfo_width() or 400
+        ch = canvas.winfo_height() or 300
         padding = 20
         
         # Escala para caber no canvas
